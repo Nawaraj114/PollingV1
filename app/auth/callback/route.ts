@@ -19,6 +19,11 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(new URL(safeNextPath(url.searchParams.get("next")), url.origin));
     }
+
+    console.error("Supabase confirmation exchange failed", {
+      code: error.code,
+      status: error.status,
+    });
   }
 
   const loginUrl = new URL("/login", url.origin);

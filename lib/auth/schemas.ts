@@ -8,13 +8,6 @@ const email = z
 
 export const resendConfirmationSchema = z.object({ email });
 
-export const confirmSignupSchema = z.object({
-  tokenHash: z
-    .string()
-    .min(20, "This confirmation link is incomplete.")
-    .max(512, "This confirmation link is invalid."),
-});
-
 const password = z
   .string()
   .min(8, "Use at least 8 characters.")

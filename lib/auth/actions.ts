@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import {
-  confirmSignupSchema,
   loginSchema,
   resendConfirmationSchema,
   signupSchema,
@@ -27,7 +26,7 @@ async function confirmationRedirectUrl() {
   const requestHeaders = await headers();
   const origin = requestHeaders.get("origin");
 
-  return origin ? `${origin}/confirm-signup` : undefined;
+  return origin ? `${origin}/auth/callback` : undefined;
 }
 
 export async function login(
@@ -148,37 +147,6 @@ export async function resendConfirmation(
     message: "A fresh confirmation email was requested. Check your inbox and spam folder.",
     status: "success",
   };
-}
-
-export async function confirmSignup(
-  _previousState: AuthState,
-  formData: FormData,
-): Promise<AuthState> {
-  const result = confirmSignupSchema.safeParse({
-    tokenHash: formData.get("tokenHash"),
-  });
-
-  if (!result.success) {
-    return {
-      message: "This confirmation link is incomplete or invalid.",
-      status: "error",
-    };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash: result.data.tokenHash,
-    type: "signup",
-  });
-
-  if (error) {
-    return {
-      message: "This confirmation link is invalid or expired. Request a fresh email below.",
-      status: "error",
-    };
-  }
-
-  redirect("/dashboard");
 }
 
 export async function signOut() {
