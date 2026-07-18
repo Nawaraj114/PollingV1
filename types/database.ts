@@ -231,8 +231,112 @@ export type Database = {
         };
         Relationships: [];
       };
+      poll_options: {
+        Row: {
+          created_at: string;
+          id: string;
+          label: string;
+          poll_id: string;
+          position: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          label: string;
+          poll_id: string;
+          position: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          label?: string;
+          poll_id?: string;
+          position?: number;
+        };
+        Relationships: [];
+      };
+      poll_votes: {
+        Row: {
+          created_at: string;
+          id: string;
+          poll_id: string;
+          poll_option_id: string;
+          voter_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          poll_id: string;
+          poll_option_id: string;
+          voter_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          poll_id?: string;
+          poll_option_id?: string;
+          voter_id?: string;
+        };
+        Relationships: [];
+      };
+      polls: {
+        Row: {
+          allows_multiple: boolean;
+          closed_at: string | null;
+          closed_by: string | null;
+          created_at: string;
+          created_by: string;
+          expires_at: string | null;
+          id: string;
+          question: string;
+          status: "closed" | "open";
+          updated_at: string;
+        };
+        Insert: {
+          allows_multiple?: boolean;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          created_at?: string;
+          created_by: string;
+          expires_at?: string | null;
+          id?: string;
+          question: string;
+          status?: "closed" | "open";
+          updated_at?: string;
+        };
+        Update: {
+          allows_multiple?: boolean;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          created_at?: string;
+          created_by?: string;
+          expires_at?: string | null;
+          id?: string;
+          question?: string;
+          status?: "closed" | "open";
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
-    Views: Record<string, never>;
+    Views: {
+      poll_overview: {
+        Row: {
+          allows_multiple: boolean;
+          closed_at: string | null;
+          closed_by: string | null;
+          created_at: string;
+          created_by: string;
+          expires_at: string | null;
+          id: string;
+          is_open: boolean;
+          question: string;
+          status: "closed" | "open";
+          updated_at: string;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       authenticate_bill_participant: {
         Args: { p_participant_id: string };
@@ -250,6 +354,14 @@ export type Database = {
         Args: { target_participant_id: string };
         Returns: boolean;
       };
+      cast_poll_vote: {
+        Args: { p_option_ids: string[]; p_poll_id: string };
+        Returns: undefined;
+      };
+      close_poll: {
+        Args: { p_poll_id: string };
+        Returns: undefined;
+      };
       create_bill: {
         Args: {
           p_category_id: string | null;
@@ -258,6 +370,15 @@ export type Database = {
           p_incurred_on: string;
           p_participants: Json;
           p_total_amount: number;
+        };
+        Returns: string;
+      };
+      create_poll: {
+        Args: {
+          p_allows_multiple: boolean;
+          p_expires_at: string | null;
+          p_options: string[];
+          p_question: string;
         };
         Returns: string;
       };
