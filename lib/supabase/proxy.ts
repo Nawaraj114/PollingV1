@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { getSupabaseEnv } from "./env";
 
-const protectedRoutes = ["/dashboard", "/polls", "/bills"];
+const protectedRoutes = ["/dashboard", "/polls", "/bills", "/account"];
 const authRoutes = ["/login", "/signup"];
 
 function redirectWithSession(url: URL, response: NextResponse) {

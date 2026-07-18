@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   loginSchema,
   resendConfirmationSchema,
-  signupSchema,
 } from "./schemas";
 
 export type AuthState = {
@@ -60,54 +59,6 @@ export async function login(
   }
 
   redirect(safeNextPath(result.data.next));
-}
-
-export async function signup(
-  _previousState: AuthState,
-  formData: FormData,
-): Promise<AuthState> {
-  const result = signupSchema.safeParse({
-    fullName: formData.get("fullName"),
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
-
-  if (!result.success) {
-    return {
-      errors: result.error.flatten().fieldErrors,
-      status: "error",
-    };
-  }
-
-  const emailRedirectTo = await confirmationRedirectUrl();
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email: result.data.email,
-    password: result.data.password,
-    options: {
-      data: { full_name: result.data.fullName },
-      ...(emailRedirectTo ? { emailRedirectTo } : {}),
-    },
-  });
-
-  if (error) {
-    return {
-      message:
-        error.status === 429
-          ? "Too many attempts. Wait a moment and try again."
-          : error.message,
-      status: "error",
-    };
-  }
-
-  if (data.session) {
-    redirect("/dashboard");
-  }
-
-  return {
-    message: "Check your email to confirm your account. The link is valid for one hour.",
-    status: "success",
-  };
 }
 
 export async function resendConfirmation(

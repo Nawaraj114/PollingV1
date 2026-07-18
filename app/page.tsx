@@ -19,7 +19,7 @@ const features = [
   {
     icon: Vote,
     title: "Decisions without the noise",
-    description: "Turn endless group-chat debates into quick, visible votes.",
+    description: "Turn drawn-out group debates into quick, visible votes.",
   },
   {
     icon: Users,
@@ -38,8 +38,8 @@ export default function HomePage() {
             <Link className="button button-ghost hidden sm:inline-flex" href="/login">
               Sign in
             </Link>
-            <Link className="button button-dark" href="/signup">
-              Join your circle
+            <Link className="button button-dark" href="/login">
+              Member sign in
             </Link>
           </nav>
         </header>
@@ -56,15 +56,15 @@ export default function HomePage() {
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-[#666a73] sm:text-xl">
               FriendCircle gives a close group one calm place to decide, split,
-              confirm, and catch up—without losing the details in chat.
+              and confirm without losing the details across different apps.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link className="button button-primary h-13 px-6" href="/signup">
-                Create your account
+              <Link className="button button-primary h-13 px-6" href="/login">
+                Enter your circle
                 <ArrowRight size={18} aria-hidden="true" />
               </Link>
-              <Link className="button button-light h-13 px-6" href="/login">
-                I already belong
+              <Link className="button button-light h-13 px-6" href="/signup">
+                How access works
               </Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-[#666a73]">

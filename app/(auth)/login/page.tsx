@@ -9,5 +9,5 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const nextPath = typeof params.next === "string" ? params.next : undefined;
   const errorMessage = typeof params.error === "string" ? params.error : undefined;
 
-  return <AuthForm errorMessage={errorMessage} mode="login" nextPath={nextPath} />;
+  return <AuthForm errorMessage={errorMessage} nextPath={nextPath} />;
 }
