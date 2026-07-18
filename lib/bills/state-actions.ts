@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +13,7 @@ import {
 import type { Json } from "@/types/database";
 import {
   acceptAllocationSchema,
+  deleteBillSchema,
   disputeAllocationSchema,
   resubmitAllocationRowsSchema,
   resubmitAllocationsSchema,
@@ -128,6 +130,58 @@ export async function disputeAllocation(
 
   refreshBill(allocation.bill_id);
   return { message: "Dispute recorded for the biller to resolve.", status: "success" };
+}
+
+export async function deleteBill(
+  _previousState: BillActionState,
+  formData: FormData,
+): Promise<BillActionState> {
+  const parsed = deleteBillSchema.safeParse({
+    billId: formData.get("billId"),
+    confirmation: formData.get("confirmation"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors, status: "error" };
+  }
+
+  const viewer = await requireViewer();
+  const supabase = await createClient();
+  const { data: bill } = await supabase
+    .from("bills")
+    .select("biller_id, deleted_at")
+    .eq("id", parsed.data.billId)
+    .maybeSingle();
+
+  if (!bill || bill.biller_id !== viewer.id || bill.deleted_at) {
+    return errorState("Only the creator can delete an active bill.");
+  }
+
+  const { data: authentication, error: authenticationError } =
+    await supabase.auth.signInWithPassword({
+      email: viewer.email,
+      password: parsed.data.password,
+    });
+
+  if (
+    authenticationError ||
+    !authentication.user ||
+    authentication.user.id !== viewer.id
+  ) {
+    return errorState("The password is incorrect. The bill was not deleted.");
+  }
+
+  const { error } = await supabase.rpc("soft_delete_bill", {
+    p_bill_id: parsed.data.billId,
+  });
+
+  if (error) {
+    return errorState("The bill could not be deleted. Refresh and try again.");
+  }
+
+  refreshBill(parsed.data.billId);
+  redirect("/bills");
 }
 
 export async function resubmitAllocations(

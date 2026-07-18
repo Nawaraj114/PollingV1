@@ -43,6 +43,14 @@ export const acceptAllocationSchema = allocationActionSchema.extend({
   password: z.string().min(1, "Enter your account password."),
 });
 
+export const deleteBillSchema = z.object({
+  billId: z.string().uuid("The bill reference is invalid."),
+  confirmation: z.literal("on", {
+    error: "Confirm that you understand this bill will be removed from active bills.",
+  }),
+  password: z.string().min(1, "Enter your account password."),
+});
+
 export const disputeAllocationSchema = allocationActionSchema.extend({
   note: z
     .string()

@@ -15,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DisputeResolutionForm } from "@/components/dispute-resolution-form";
+import { DeleteBillForm } from "@/components/delete-bill-form";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ParticipantAllocationActions } from "@/components/participant-allocation-actions";
 import { requireViewer } from "@/lib/auth/session";
@@ -57,7 +58,7 @@ export default async function BillDetailPage({
   const supabase = await createClient();
   const { data: bill, error } = await supabase
     .from("bills")
-    .select("biller_id, category_id, created_at, description, id, incurred_on, status, total_amount")
+    .select("biller_id, category_id, created_at, deleted_at, deleted_by, description, id, incurred_on, status, total_amount")
     .eq("id", id)
     .maybeSingle();
 
@@ -98,6 +99,7 @@ export default async function BillDetailPage({
     ({ participant_id }) => participant_id === viewer.id,
   );
   const isBiller = bill.biller_id === viewer.id;
+  const isDeleted = bill.deleted_at !== null;
   const hasDispute = (participants ?? []).some(
     ({ auth_status }) => auth_status === "disputed",
   );
@@ -127,6 +129,7 @@ export default async function BillDetailPage({
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-[#163d68] px-3 py-1.5 text-xs font-semibold text-[#75baff]">{categoryById.get(bill.category_id) ?? "Bill"}</span>
             <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-semibold capitalize text-white/70">{bill.status}</span>
+            {isDeleted && <span className="rounded-full bg-[#6b2924] px-3 py-1.5 text-xs font-semibold text-[#ffb9b1]">Deleted</span>}
           </div>
           <div className="mt-6 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-end">
             <div>
@@ -143,7 +146,9 @@ export default async function BillDetailPage({
           </div>
         </div>
         <div className="border-t border-white/8 bg-white/4 px-6 py-4 text-sm text-white/55 sm:px-9">
-          Phase 3 requires each participant to accept or dispute their allocation. Accepted amounts are database-locked; payment arrives in Phase 4.
+          {isDeleted
+            ? `Deleted by the bill creator on ${formatTimestamp(bill.deleted_at!)}. This record and its audit history are read-only.`
+            : "Phase 3 requires each participant to accept or dispute their allocation. Accepted amounts are database-locked; payment arrives in Phase 4."}
         </div>
       </section>
 
@@ -209,7 +214,7 @@ export default async function BillDetailPage({
         </div>
       </section>
 
-      {viewerParticipant && (
+      {viewerParticipant && !isDeleted && (
         <ParticipantAllocationActions
           authenticatedAt={viewerParticipant.authenticated_at}
           disputeNote={viewerParticipant.dispute_note}
@@ -218,7 +223,7 @@ export default async function BillDetailPage({
         />
       )}
 
-      {isBiller && hasDispute && (
+      {isBiller && hasDispute && !isDeleted && (
         <DisputeResolutionForm
           allocations={unlockedAllocations.map((participant) => ({
             amount: participant.owed_amount,
@@ -242,6 +247,8 @@ export default async function BillDetailPage({
           <p className="mt-1 text-sm leading-6 text-[#4a7657]">Both the app server and database validate the amounts before this bill can be created.</p>
         </div>
       </section>
+
+      {isBiller && !isDeleted && <DeleteBillForm billId={bill.id} />}
 
       <section className="mt-7 rounded-[1.7rem] border border-black/7 bg-white p-5 sm:p-7">
         <div className="flex items-center gap-3">
@@ -269,6 +276,7 @@ export default async function BillDetailPage({
             const eventDetails = {
               amount_updated: `${actorName} corrected ${participantName}'s allocation to ${formatInr(Number(eventValue(event.event_data, "owed_amount") ?? participant?.owed_amount ?? 0))}.`,
               authenticated: `${participantName} accepted and database-locked the allocation with password authentication.`,
+              bill_deleted: `${actorName} deleted the bill. The record became read-only and moved out of active bills.`,
               breakdown_updated: `${actorName} updated ${participantName}'s category breakdown.`,
               created: `${actorName} created ${participantName}'s ${formatInr(Number(eventValue(event.event_data, "owed_amount") ?? participant?.owed_amount ?? 0))} allocation.`,
               disputed: `${participantName} disputed the allocation: “${String(eventValue(event.event_data, "note") ?? "Correction requested") }”`,
@@ -277,6 +285,7 @@ export default async function BillDetailPage({
             const EventIcon = {
               amount_updated: RotateCcw,
               authenticated: LockKeyhole,
+              bill_deleted: AlertTriangle,
               breakdown_updated: RotateCcw,
               created: CircleDot,
               disputed: AlertTriangle,

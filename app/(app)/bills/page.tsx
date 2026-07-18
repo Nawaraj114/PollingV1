@@ -27,7 +27,7 @@ export default async function BillsPage() {
   const supabase = await createClient();
   const { data: bills, error } = await supabase
     .from("bills")
-    .select("biller_id, category_id, created_at, description, id, incurred_on, status, total_amount")
+    .select("biller_id, category_id, created_at, deleted_at, description, id, incurred_on, status, total_amount")
     .order("incurred_on", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -42,6 +42,8 @@ export default async function BillsPage() {
   const categoryById = new Map((categories ?? []).map((category) => [category.id, category.name]));
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
   const participants = participantResult.data ?? [];
+  const activeBills = (bills ?? []).filter(({ deleted_at }) => !deleted_at);
+  const deletedBills = (bills ?? []).filter(({ deleted_at }) => Boolean(deleted_at));
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -67,19 +69,19 @@ export default async function BillsPage() {
         </div>
       )}
 
-      {!error && !bills?.length && (
+      {!error && !activeBills.length && (
         <section className="mt-10 rounded-[2rem] border border-dashed border-[#cfd1d6] bg-white px-6 py-14 text-center">
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
             <ReceiptText size={25} aria-hidden="true" />
           </span>
-          <h2 className="mt-5 text-xl font-semibold tracking-[-0.03em]">No bills in your circle yet</h2>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">Create the first bill and let the tested split calculator assign every paisa.</p>
+          <h2 className="mt-5 text-xl font-semibold tracking-[-0.03em]">No active bills in your circle</h2>
+          <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">Create a bill and let the tested split calculator assign every paisa.</p>
           <Link className="button button-dark mt-6" href="/bills/new">Create your first bill</Link>
         </section>
       )}
 
       <section className="mt-9 grid gap-4" aria-label="Bills">
-        {(bills ?? []).map((bill) => {
+        {activeBills.map((bill) => {
           const billParticipants = participants.filter(({ bill_id }) => bill_id === bill.id);
           const viewerAllocation = billParticipants.find(({ participant_id }) => participant_id === viewer.id);
           const billerName = profileById.get(bill.biller_id) ?? "Circle member";
@@ -132,6 +134,36 @@ export default async function BillsPage() {
           );
         })}
       </section>
+
+      {deletedBills.length > 0 && (
+        <details className="mt-10 rounded-[1.6rem] border border-black/7 bg-white p-5 sm:p-6">
+          <summary className="cursor-pointer text-sm font-semibold text-[#6f727a]">
+            Deleted bills ({deletedBills.length})
+          </summary>
+          <p className="mt-2 text-sm leading-6 text-[#92959d]">
+            Deleted bills are read-only and retained for everyone who was part of them.
+          </p>
+          <div className="mt-4 grid gap-3">
+            {deletedBills.map((bill) => (
+              <Link
+                className="flex flex-col justify-between gap-3 rounded-2xl border border-[#e4e5e8] bg-[#f8f8f9] p-4 hover:border-[#cfd1d6] sm:flex-row sm:items-center"
+                href={`/bills/${bill.id}`}
+                key={bill.id}
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#f1f2f3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#777a82]">Deleted</span>
+                    <span className="text-xs text-[#92959d]">{categoryById.get(bill.category_id) ?? "Bill"}</span>
+                  </div>
+                  <p className="mt-2 truncate font-semibold text-[#555861]">{bill.description}</p>
+                  <p className="mt-1 text-xs text-[#92959d]">{formatDate(bill.incurred_on)}</p>
+                </div>
+                <p className="font-semibold text-[#777a82]">{formatInr(bill.total_amount)}</p>
+              </Link>
+            ))}
+          </div>
+        </details>
+      )}
     </main>
   );
 }
