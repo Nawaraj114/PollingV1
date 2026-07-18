@@ -108,6 +108,7 @@ export type Database = {
           event_type:
             | "amount_updated"
             | "authenticated"
+            | "bill_deleted"
             | "breakdown_updated"
             | "created"
             | "disputed"
@@ -122,6 +123,7 @@ export type Database = {
           event_type:
             | "amount_updated"
             | "authenticated"
+            | "bill_deleted"
             | "breakdown_updated"
             | "created"
             | "disputed"
@@ -136,6 +138,7 @@ export type Database = {
           event_type?:
             | "amount_updated"
             | "authenticated"
+            | "bill_deleted"
             | "breakdown_updated"
             | "created"
             | "disputed"
@@ -149,6 +152,8 @@ export type Database = {
           biller_id: string;
           category_id: string;
           created_at: string;
+          deleted_at: string | null;
+          deleted_by: string | null;
           description: string;
           id: string;
           incurred_on: string;
@@ -160,6 +165,8 @@ export type Database = {
           biller_id: string;
           category_id: string;
           created_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
           description: string;
           id?: string;
           incurred_on: string;
@@ -171,6 +178,8 @@ export type Database = {
           biller_id?: string;
           category_id?: string;
           created_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
           description?: string;
           id?: string;
           incurred_on?: string;
@@ -240,6 +249,10 @@ export type Database = {
       };
       resubmit_bill_allocations: {
         Args: { p_allocations: Json; p_bill_id: string };
+        Returns: undefined;
+      };
+      soft_delete_bill: {
+        Args: { p_bill_id: string };
         Returns: undefined;
       };
     };
