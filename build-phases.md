@@ -73,11 +73,11 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 4 — Payment & Confirmation Flow
 **Goal:** the "Paid" / "Confirm receipt" loop, fully audited.
 
-- [ ] Add `payment_status`, `paid_at`, `confirmed_at` to `bill_participants`
-- [ ] "Mark as Paid" button, visible only once `auth_status = 'authenticated'`; sets `marked_paid` + timestamp
-- [ ] "Confirm Receipt" button on the biller's side, gated by the same step-up auth as Phase 3; sets `confirmed_paid` + timestamp
-- [ ] Auto-flip `bills.status` to `'settled'` once all participants reach `confirmed_paid` (DB trigger, not app logic)
-- [ ] Bill detail page shows a full timeline pulled from `bill_status_history`: created → amount set → authenticated → paid → confirmed, each with who and when
+- [x] Add `payment_status`, `paid_at`, `confirmed_at` to `bill_participants`
+- [x] "Mark as Paid" button, visible only once `auth_status = 'authenticated'`; sets `marked_paid` + timestamp
+- [x] "Confirm Receipt" button on the biller's side, gated by the same step-up auth as Phase 3; sets `confirmed_paid` + timestamp
+- [x] Auto-flip `bills.status` to `'settled'` once all participants reach `confirmed_paid` (DB trigger, not app logic)
+- [x] Bill detail page shows a full timeline pulled from `bill_status_history`: created → amount set → authenticated → paid → confirmed, each with who and when
 
 **Definition of Done:** a full bill lifecycle — create, split, authenticate, pay, confirm — is completable end-to-end by two real test accounts, and the timeline view matches reality.
 

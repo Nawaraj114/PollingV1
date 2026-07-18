@@ -13,6 +13,8 @@ import {
 import type { Json } from "@/types/database";
 import {
   acceptAllocationSchema,
+  allocationActionSchema,
+  confirmPaymentSchema,
   deleteBillSchema,
   disputeAllocationSchema,
   resubmitAllocationRowsSchema,
@@ -33,6 +35,117 @@ function refreshBill(billId: string) {
   revalidatePath(`/bills/${billId}`);
   revalidatePath("/bills");
   revalidatePath("/dashboard");
+}
+
+export async function markAllocationPaid(
+  _previousState: BillActionState,
+  formData: FormData,
+): Promise<BillActionState> {
+  const parsed = allocationActionSchema.safeParse({
+    participantId: formData.get("participantId"),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors, status: "error" };
+  }
+
+  const viewer = await requireViewer();
+  const supabase = await createClient();
+  const { data: allocation } = await supabase
+    .from("bill_participants")
+    .select("auth_status, bill_id, participant_id, payment_status")
+    .eq("id", parsed.data.participantId)
+    .maybeSingle();
+
+  if (
+    !allocation ||
+    allocation.participant_id !== viewer.id ||
+    allocation.auth_status !== "authenticated" ||
+    allocation.payment_status !== "unpaid"
+  ) {
+    return errorState("Only your accepted unpaid allocation can be marked as paid.");
+  }
+
+  const { error } = await supabase.rpc("mark_bill_participant_paid", {
+    p_participant_id: parsed.data.participantId,
+  });
+
+  if (error) {
+    return errorState("The payment could not be marked. Refresh and try again.");
+  }
+
+  refreshBill(allocation.bill_id);
+  return {
+    message: "Payment marked as sent. The biller can now confirm receipt.",
+    status: "success",
+  };
+}
+
+export async function confirmPaymentReceipt(
+  _previousState: BillActionState,
+  formData: FormData,
+): Promise<BillActionState> {
+  const parsed = confirmPaymentSchema.safeParse({
+    participantId: formData.get("participantId"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors, status: "error" };
+  }
+
+  const viewer = await requireViewer();
+  const supabase = await createClient();
+  const { data: allocation } = await supabase
+    .from("bill_participants")
+    .select("auth_status, bill_id, payment_status")
+    .eq("id", parsed.data.participantId)
+    .maybeSingle();
+
+  if (!allocation) {
+    return errorState("That payment could not be found.");
+  }
+
+  const { data: bill } = await supabase
+    .from("bills")
+    .select("biller_id, deleted_at")
+    .eq("id", allocation.bill_id)
+    .maybeSingle();
+
+  if (
+    !bill ||
+    bill.biller_id !== viewer.id ||
+    bill.deleted_at ||
+    allocation.auth_status !== "authenticated" ||
+    allocation.payment_status !== "marked_paid"
+  ) {
+    return errorState("Only the biller can confirm a marked payment.");
+  }
+
+  const { data: authentication, error: authenticationError } =
+    await supabase.auth.signInWithPassword({
+      email: viewer.email,
+      password: parsed.data.password,
+    });
+
+  if (
+    authenticationError ||
+    !authentication.user ||
+    authentication.user.id !== viewer.id
+  ) {
+    return errorState("The password is incorrect. Receipt was not confirmed.");
+  }
+
+  const { error } = await supabase.rpc("confirm_bill_participant_paid", {
+    p_participant_id: parsed.data.participantId,
+  });
+
+  if (error) {
+    return errorState("Receipt could not be confirmed. Refresh and try again.");
+  }
+
+  refreshBill(allocation.bill_id);
+  return { message: "Receipt confirmed and recorded.", status: "success" };
 }
 
 export async function acceptAllocation(

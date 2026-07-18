@@ -43,6 +43,10 @@ export const acceptAllocationSchema = allocationActionSchema.extend({
   password: z.string().min(1, "Enter your account password."),
 });
 
+export const confirmPaymentSchema = allocationActionSchema.extend({
+  password: z.string().min(1, "Enter your account password."),
+});
+
 export const deleteBillSchema = z.object({
   billId: z.string().uuid("The bill reference is invalid."),
   confirmation: z.literal("on", {

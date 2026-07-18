@@ -4,19 +4,22 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 3 — Locking, Step-Up Auth & Tamper Prevention (preview branch)
+Phase 4 — Payment & Confirmation Flow (preview branch)
 
 - Password re-authentication before a participant can accept an allocation
 - Database-enforced fresh-session check for acceptance
 - Accepted amounts, category breakdowns, and bill headers locked by triggers
 - Participant dispute notes and biller-only balanced resubmission
 - Creator-only, password-confirmed soft deletion with retained audit history
+- Authenticated participants can irreversibly mark their own payment as sent
+- Password-confirmed receipt actions are restricted to the bill creator
+- Database-triggered settlement after every participant payment is confirmed
 - Append-only, trigger-generated allocation history
 - Deterministic integer-paisa split calculator with 25 unit tests
 - Phase 1 invite-only authentication and Phase 2 billing creation remain active
 - GitHub Actions checks for linting, tests, types, and production builds
 
-Payment and receipt confirmation are not implemented until Phase 4. Treat the current phase as an acceptance and tamper-prevention preview, not a complete payment ledger.
+Payment transitions are enforced by database triggers as well as server actions. A bill cannot settle early, and neither a participant nor the biller can silently skip or reverse a payment state.
 
 ## Local setup
 

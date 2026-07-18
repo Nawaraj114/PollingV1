@@ -20,7 +20,7 @@ const modules = [
     href: "/bills",
     icon: ReceiptText,
     label: "Billing",
-    phase: "Phase 3 active",
+    phase: "Phase 4 active",
   },
   {
     accent: "bg-[#f0a938]",
@@ -75,7 +75,7 @@ export default async function DashboardPage() {
             Good to see you, {firstName}.
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-8 text-[#74777f]">
-            Billing acceptance, disputes, database locking, and immutable history are now available for your phase review.
+            Billing acceptance, audited payment marking, receipt confirmation, and automatic settlement are ready for your phase review.
           </p>
         </div>
 
@@ -124,12 +124,12 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Build progress</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Phase 3 · Trust Controls</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Phase 4 · Payment Confirmation</h2>
             </div>
             <span className="rounded-full bg-[#163d68] px-3 py-1.5 text-xs font-semibold text-[#75baff]">Phase preview</span>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {["Password step-up acceptance", "Database-enforced locks", "Immutable dispute history"].map((item) => (
+            {["Participant marks payment", "Password-confirmed receipt", "Automatic database settlement"].map((item) => (
               <div className="flex items-center gap-2 rounded-2xl border border-white/9 bg-white/5 px-4 py-3 text-sm" key={item}>
                 <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#1473e6]">
                   <Check size={12} strokeWidth={3} aria-hidden="true" />
