@@ -34,3 +34,34 @@ export const participantFormSchema = z.array(
     participantId: z.string().uuid(),
   }),
 ).min(1, "Choose at least one participant.").max(50);
+
+export const allocationActionSchema = z.object({
+  participantId: z.string().uuid("The allocation reference is invalid."),
+});
+
+export const acceptAllocationSchema = allocationActionSchema.extend({
+  password: z.string().min(1, "Enter your account password."),
+});
+
+export const disputeAllocationSchema = allocationActionSchema.extend({
+  note: z
+    .string()
+    .trim()
+    .min(2, "Explain what needs to be corrected.")
+    .max(300, "Dispute notes must be 300 characters or fewer."),
+});
+
+export const resubmitAllocationsSchema = z.object({
+  allocationsJson: z.string().min(1),
+  billId: z.string().uuid("The bill reference is invalid."),
+});
+
+export const resubmitAllocationRowsSchema = z
+  .array(
+    z.object({
+      amount: z.string().min(1, "Every unlocked allocation needs an amount."),
+      participantRowId: z.string().uuid(),
+    }),
+  )
+  .min(1, "There are no allocations to resubmit.")
+  .max(50);
