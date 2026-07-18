@@ -1,0 +1,2 @@
+-- Phase 0 intentionally has no shared seed data. Auth users are created
+-- through Supabase Auth so the profile trigger is exercised end-to-end.
