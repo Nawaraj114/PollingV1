@@ -77,7 +77,9 @@ export default async function BillsPage({
   const profileById = new Map(
     (profiles ?? []).map((profile) => [profile.id, profile.full_name]),
   );
-  const activeBills = (bills ?? []).filter(({ deleted_at }) => !deleted_at);
+  const activeBills = (bills ?? []).filter(
+    ({ deleted_at, status }) => !deleted_at && status !== "settled",
+  );
   const deletedBills = (bills ?? []).filter(({ deleted_at }) => Boolean(deleted_at));
   const hasPasskey = Boolean(currentSitePasskey);
 
