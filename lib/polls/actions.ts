@@ -77,7 +77,7 @@ export async function createPoll(
 
   revalidatePath("/polls");
   revalidatePath("/dashboard");
-  redirect(`/polls/${pollId}`);
+  redirect("/polls");
 }
 
 export async function castVote(

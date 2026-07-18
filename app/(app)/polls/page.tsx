@@ -1,27 +1,15 @@
 import {
-  ArrowRight,
-  CalendarClock,
   CirclePlus,
-  ListChecks,
-  Radio,
-  UserRound,
   Vote,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PollFeed } from "@/components/poll-feed";
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Polls" };
-
-function formatTimestamp(timestamp: string) {
-  return new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Kathmandu",
-  }).format(new Date(timestamp));
-}
 
 export default async function PollsPage() {
   const viewer = await requireViewer();
@@ -42,12 +30,14 @@ export default async function PollsPage() {
     pollIds.length
       ? supabase
           .from("poll_votes")
-          .select("poll_id, poll_option_id, voter_id")
+          .select("created_at, id, poll_id, poll_option_id, voter_id")
           .in("poll_id", pollIds)
       : Promise.resolve({ data: [] }),
     supabase.from("profiles").select("full_name, id"),
   ]);
-  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
+  const profileNames = Object.fromEntries(
+    (profiles ?? []).map((profile) => [profile.id, profile.full_name]),
+  );
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -86,61 +76,15 @@ export default async function PollsPage() {
         </section>
       )}
 
-      <section className="mt-9 grid gap-4" aria-label="Polls">
-        {(polls ?? []).map((poll) => {
-          const pollOptions = (options ?? []).filter(({ poll_id }) => poll_id === poll.id);
-          const pollVotes = (votes ?? []).filter(({ poll_id }) => poll_id === poll.id);
-          const voterCount = new Set(pollVotes.map(({ voter_id }) => voter_id)).size;
-          const viewerVoted = pollVotes.some(({ voter_id }) => voter_id === viewer.id);
-          const closed = !poll.is_open;
-          const expired = poll.status === "open" && !poll.is_open;
-          const leadingOption = pollOptions
-            .map((option) => ({
-              ...option,
-              votes: pollVotes.filter(({ poll_option_id }) => poll_option_id === option.id).length,
-            }))
-            .sort((left, right) => right.votes - left.votes)[0];
-
-          return (
-            <Link
-              className="group grid gap-5 rounded-[1.6rem] border border-black/7 bg-white p-5 shadow-[0_9px_30px_rgba(34,37,43,0.035)] hover:-translate-y-0.5 hover:shadow-[0_15px_38px_rgba(34,37,43,0.08)] sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
-              href={`/polls/${poll.id}`}
-              key={poll.id}
-            >
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ${closed ? "bg-[#f1f2f3] text-[#70737a]" : "bg-[#eaf8ee] text-[#2f7042]"}`}>
-                    {closed ? "Closed" : "Open"}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4dc] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#92600f]">
-                    {poll.allows_multiple ? <ListChecks size={12} aria-hidden="true" /> : <Radio size={12} aria-hidden="true" />}
-                    {poll.allows_multiple ? "Multiple choice" : "Single choice"}
-                  </span>
-                  {viewerVoted && (
-                    <span className="rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#1767bf]">You voted</span>
-                  )}
-                </div>
-                <h2 className="mt-3 text-xl font-semibold tracking-[-0.035em]">{poll.question}</h2>
-                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#81848c]">
-                  <span className="inline-flex items-center gap-1.5"><UserRound size={14} aria-hidden="true" /> By {poll.created_by === viewer.id ? "you" : profileById.get(poll.created_by) ?? "Circle member"}</span>
-                  {poll.expires_at && (
-                    <span className="inline-flex items-center gap-1.5"><CalendarClock size={14} aria-hidden="true" /> {expired ? "Expired" : "Closes"} {formatTimestamp(poll.expires_at)}</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-5 sm:justify-end">
-                <div className="text-left sm:text-right">
-                  <p className="text-xs font-medium text-[#92959d]">{voterCount} voter{voterCount === 1 ? "" : "s"}</p>
-                  <p className="mt-1 max-w-48 truncate text-sm font-semibold text-[#555861]">
-                    {leadingOption && pollVotes.length > 0 ? `Leading: ${leadingOption.label}` : `${pollOptions.length} options`}
-                  </p>
-                </div>
-                <ArrowRight className="text-[#a6a8ae] group-hover:translate-x-1 group-hover:text-[#202124]" size={19} aria-hidden="true" />
-              </div>
-            </Link>
-          );
-        })}
-      </section>
+      {!error && (polls ?? []).length > 0 && (
+        <PollFeed
+          initialVotes={votes ?? []}
+          options={options ?? []}
+          polls={polls ?? []}
+          profileNames={profileNames}
+          viewerId={viewer.id}
+        />
+      )}
     </main>
   );
 }
