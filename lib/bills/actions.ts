@@ -147,7 +147,7 @@ export async function createBill(
 
     revalidatePath("/bills");
     revalidatePath("/dashboard");
-    redirect(`/bills/${billId}`);
+    redirect(`/bills?bill=${encodeURIComponent(billId)}`);
   } catch (error) {
     if (error instanceof BillSplitError) {
       return errorState(error.message);

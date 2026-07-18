@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 
 import { BillFeedCard } from "@/components/bill-feed-card";
+import { BillRealtimeRefresh } from "@/components/bill-realtime-refresh";
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -170,8 +171,12 @@ export default async function BillsPage({
         </div>
       )}
 
+      <div className="mt-8 flex justify-end">
+        <BillRealtimeRefresh />
+      </div>
+
       {!error && !activeBills.length && (
-        <section className="mt-10 rounded-[2rem] border border-dashed border-[#cfd1d6] bg-white px-6 py-14 text-center">
+        <section className="mt-4 rounded-[2rem] border border-dashed border-[#cfd1d6] bg-white px-6 py-14 text-center">
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
             <ReceiptText size={25} aria-hidden="true" />
           </span>
@@ -187,7 +192,7 @@ export default async function BillsPage({
         </section>
       )}
 
-      <section className="mt-9 grid gap-5" aria-label="Active bills">
+      <section className="mt-4 grid gap-5" aria-label="Active bills">
         {activeBills.map(renderBill)}
       </section>
 
