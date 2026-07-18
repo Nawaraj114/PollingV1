@@ -56,8 +56,13 @@ export type Database = {
       };
       bill_participants: {
         Row: {
+          auth_method: "password" | "webauthn" | null;
+          auth_status: "authenticated" | "disputed" | "pending";
+          authenticated_at: string | null;
           bill_id: string;
           created_at: string;
+          dispute_note: string | null;
+          disputed_at: string | null;
           id: string;
           owed_amount: number;
           participant_id: string;
@@ -65,8 +70,13 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          auth_method?: "password" | "webauthn" | null;
+          auth_status?: "authenticated" | "disputed" | "pending";
+          authenticated_at?: string | null;
           bill_id: string;
           created_at?: string;
+          dispute_note?: string | null;
+          disputed_at?: string | null;
           id?: string;
           owed_amount: number;
           participant_id: string;
@@ -74,8 +84,13 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          auth_method?: "password" | "webauthn" | null;
+          auth_status?: "authenticated" | "disputed" | "pending";
+          authenticated_at?: string | null;
           bill_id?: string;
           created_at?: string;
+          dispute_note?: string | null;
+          disputed_at?: string | null;
           id?: string;
           owed_amount?: number;
           participant_id?: string;
@@ -84,11 +99,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      bill_status_history: {
+        Row: {
+          actor_id: string;
+          bill_participant_id: string;
+          created_at: string;
+          event_data: Json;
+          event_type:
+            | "amount_updated"
+            | "authenticated"
+            | "bill_deleted"
+            | "breakdown_updated"
+            | "created"
+            | "disputed"
+            | "resubmitted";
+          id: string;
+        };
+        Insert: {
+          actor_id: string;
+          bill_participant_id: string;
+          created_at?: string;
+          event_data?: Json;
+          event_type:
+            | "amount_updated"
+            | "authenticated"
+            | "bill_deleted"
+            | "breakdown_updated"
+            | "created"
+            | "disputed"
+            | "resubmitted";
+          id?: string;
+        };
+        Update: {
+          actor_id?: string;
+          bill_participant_id?: string;
+          created_at?: string;
+          event_data?: Json;
+          event_type?:
+            | "amount_updated"
+            | "authenticated"
+            | "bill_deleted"
+            | "breakdown_updated"
+            | "created"
+            | "disputed"
+            | "resubmitted";
+          id?: string;
+        };
+        Relationships: [];
+      };
       bills: {
         Row: {
           biller_id: string;
           category_id: string;
           created_at: string;
+          deleted_at: string | null;
+          deleted_by: string | null;
           description: string;
           id: string;
           incurred_on: string;
@@ -100,6 +165,8 @@ export type Database = {
           biller_id: string;
           category_id: string;
           created_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
           description: string;
           id?: string;
           incurred_on: string;
@@ -111,6 +178,8 @@ export type Database = {
           biller_id?: string;
           category_id?: string;
           created_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
           description?: string;
           id?: string;
           incurred_on?: string;
@@ -147,8 +216,16 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      authenticate_bill_participant: {
+        Args: { p_participant_id: string };
+        Returns: undefined;
+      };
       can_read_bill: {
         Args: { target_bill_id: string };
+        Returns: boolean;
+      };
+      can_read_bill_participant: {
+        Args: { target_participant_id: string };
         Returns: boolean;
       };
       create_bill: {
@@ -162,9 +239,21 @@ export type Database = {
         };
         Returns: string;
       };
+      dispute_bill_participant: {
+        Args: { p_note: string; p_participant_id: string };
+        Returns: undefined;
+      };
       is_bill_biller: {
         Args: { target_bill_id: string };
         Returns: boolean;
+      };
+      resubmit_bill_allocations: {
+        Args: { p_allocations: Json; p_bill_id: string };
+        Returns: undefined;
+      };
+      soft_delete_bill: {
+        Args: { p_bill_id: string };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

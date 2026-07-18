@@ -58,12 +58,13 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 3 — Locking, Step-Up Auth, and Tamper Prevention
 **Goal:** implement the trust boundary — this is the phase that actually satisfies "admin should not be able to tamper."
 
-- [ ] Add `auth_status`, `auth_method`, `authenticated_at` to `bill_participants`
-- [ ] DB trigger: reject any UPDATE to `owed_amount` / line items once `auth_status = 'authenticated'`, unless it's a system-controlled dispute reset
-- [ ] RLS rewrite per the policy table in the design spec: biller can edit only while `pending`; participant is the only one who can flip `pending → authenticated`
-- [ ] Step-up auth v1 (fast path): before allowing the "Authenticate & Accept" click to actually write to the DB, re-prompt for password and verify via `supabase.auth.signInWithPassword` (or a short-lived re-auth check) — store `auth_method = 'password'`
-- [ ] `bill_status_history` table + a trigger that logs every status transition automatically (don't rely on the app remembering to log it — do it at the DB level so it can never be skipped)
-- [ ] Add the **dispute** path: participant can reject with a note instead of authenticating → `auth_status = 'disputed'` → unlocks that row for the biller to correct → re-submits to `pending`
+- [x] Add `auth_status`, `auth_method`, `authenticated_at` to `bill_participants`
+- [x] DB trigger: reject any UPDATE to `owed_amount` / line items once `auth_status = 'authenticated'`, unless it's a system-controlled dispute reset
+- [x] RLS rewrite per the policy table in the design spec: biller can edit only while `pending`; participant is the only one who can flip `pending → authenticated`
+- [x] Step-up auth v1 (fast path): before allowing the "Authenticate & Accept" click to actually write to the DB, re-prompt for password and verify via `supabase.auth.signInWithPassword` (or a short-lived re-auth check) — store `auth_method = 'password'`
+- [x] `bill_status_history` table + a trigger that logs every status transition automatically (don't rely on the app remembering to log it — do it at the DB level so it can never be skipped)
+- [x] Add the **dispute** path: participant can reject with a note instead of authenticating → `auth_status = 'disputed'` → unlocks that row for the biller to correct → re-submits to `pending`
+- [x] Creator-only bill deletion with password reconfirmation; retain the deleted bill and its history as an immutable audit record
 
 **Definition of Done:** try, as the biller, to edit an amount after your test friend has authenticated it — it should fail. Confirm the failure happens at the database level (test by calling the API directly, not just clicking through the UI).
 

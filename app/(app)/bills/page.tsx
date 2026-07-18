@@ -27,7 +27,7 @@ export default async function BillsPage() {
   const supabase = await createClient();
   const { data: bills, error } = await supabase
     .from("bills")
-    .select("biller_id, category_id, created_at, description, id, incurred_on, status, total_amount")
+    .select("biller_id, category_id, created_at, deleted_at, description, id, incurred_on, status, total_amount")
     .order("incurred_on", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -36,12 +36,14 @@ export default async function BillsPage() {
     supabase.from("bill_categories").select("id, name"),
     supabase.from("profiles").select("full_name, id"),
     billIds.length
-      ? supabase.from("bill_participants").select("bill_id, owed_amount, participant_id").in("bill_id", billIds)
+      ? supabase.from("bill_participants").select("auth_status, bill_id, owed_amount, participant_id").in("bill_id", billIds)
       : Promise.resolve({ data: [] }),
   ]);
   const categoryById = new Map((categories ?? []).map((category) => [category.id, category.name]));
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
   const participants = participantResult.data ?? [];
+  const activeBills = (bills ?? []).filter(({ deleted_at }) => !deleted_at);
+  const deletedBills = (bills ?? []).filter(({ deleted_at }) => Boolean(deleted_at));
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -49,7 +51,7 @@ export default async function BillsPage() {
         <div>
           <div className="eyebrow">
             <ReceiptText size={14} className="text-[#1473e6]" aria-hidden="true" />
-            Billing core
+            Billing trust controls
           </div>
           <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">My bills</h1>
           <p className="mt-3 max-w-xl text-lg leading-8 text-[#74777f]">
@@ -63,26 +65,41 @@ export default async function BillsPage() {
 
       {error && (
         <div className="mt-8 rounded-2xl border border-[#f1c5bf] bg-[#fff3f1] px-5 py-4 text-sm text-[#9e342a]">
-          Billing data could not be loaded. Confirm that the Phase 2 migration has been applied.
+          Billing data could not be loaded. Confirm that the Phase 3 migration has been applied.
         </div>
       )}
 
-      {!error && !bills?.length && (
+      {!error && !activeBills.length && (
         <section className="mt-10 rounded-[2rem] border border-dashed border-[#cfd1d6] bg-white px-6 py-14 text-center">
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
             <ReceiptText size={25} aria-hidden="true" />
           </span>
-          <h2 className="mt-5 text-xl font-semibold tracking-[-0.03em]">No bills in your circle yet</h2>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">Create the first bill and let the tested split calculator assign every paisa.</p>
+          <h2 className="mt-5 text-xl font-semibold tracking-[-0.03em]">No active bills in your circle</h2>
+          <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">Create a bill and let the tested split calculator assign every paisa.</p>
           <Link className="button button-dark mt-6" href="/bills/new">Create your first bill</Link>
         </section>
       )}
 
       <section className="mt-9 grid gap-4" aria-label="Bills">
-        {(bills ?? []).map((bill) => {
+        {activeBills.map((bill) => {
           const billParticipants = participants.filter(({ bill_id }) => bill_id === bill.id);
           const viewerAllocation = billParticipants.find(({ participant_id }) => participant_id === viewer.id);
           const billerName = profileById.get(bill.biller_id) ?? "Circle member";
+          const acceptedCount = billParticipants.filter(
+            ({ auth_status }) => auth_status === "authenticated",
+          ).length;
+          const hasDispute = billParticipants.some(
+            ({ auth_status }) => auth_status === "disputed",
+          );
+          const viewerStatus = viewerAllocation
+            ? {
+                authenticated: "Accepted & locked",
+                disputed: "You disputed",
+                pending: "Needs your review",
+              }[viewerAllocation.auth_status]
+            : hasDispute
+              ? "Dispute needs attention"
+              : `${acceptedCount}/${billParticipants.length} accepted`;
 
           return (
             <Link
@@ -96,7 +113,7 @@ export default async function BillsPage() {
                     {categoryById.get(bill.category_id) ?? "Bill"}
                   </span>
                   <span className="rounded-full bg-[#f1f2f3] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#70737a]">
-                    {bill.status}
+                    {viewerStatus}
                   </span>
                 </div>
                 <h2 className="mt-3 truncate text-xl font-semibold tracking-[-0.035em]">{bill.description}</h2>
@@ -109,7 +126,7 @@ export default async function BillsPage() {
                 <div className="text-left sm:text-right">
                   <p className="text-xs font-medium text-[#92959d]">{viewerAllocation ? "You owe" : "Bill total"}</p>
                   <p className="mt-1 text-xl font-semibold tracking-[-0.035em]">{formatInr(viewerAllocation?.owed_amount ?? bill.total_amount)}</p>
-                  <p className="mt-1 text-xs text-[#92959d]">{billParticipants.length} participant{billParticipants.length === 1 ? "" : "s"}</p>
+                  <p className="mt-1 text-xs text-[#92959d]">{acceptedCount} of {billParticipants.length} locked</p>
                 </div>
                 <ArrowRight className="text-[#a6a8ae] group-hover:translate-x-1 group-hover:text-[#202124]" size={19} aria-hidden="true" />
               </div>
@@ -117,6 +134,36 @@ export default async function BillsPage() {
           );
         })}
       </section>
+
+      {deletedBills.length > 0 && (
+        <details className="mt-10 rounded-[1.6rem] border border-black/7 bg-white p-5 sm:p-6">
+          <summary className="cursor-pointer text-sm font-semibold text-[#6f727a]">
+            Deleted bills ({deletedBills.length})
+          </summary>
+          <p className="mt-2 text-sm leading-6 text-[#92959d]">
+            Deleted bills are read-only and retained for everyone who was part of them.
+          </p>
+          <div className="mt-4 grid gap-3">
+            {deletedBills.map((bill) => (
+              <Link
+                className="flex flex-col justify-between gap-3 rounded-2xl border border-[#e4e5e8] bg-[#f8f8f9] p-4 hover:border-[#cfd1d6] sm:flex-row sm:items-center"
+                href={`/bills/${bill.id}`}
+                key={bill.id}
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#f1f2f3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#777a82]">Deleted</span>
+                    <span className="text-xs text-[#92959d]">{categoryById.get(bill.category_id) ?? "Bill"}</span>
+                  </div>
+                  <p className="mt-2 truncate font-semibold text-[#555861]">{bill.description}</p>
+                  <p className="mt-1 text-xs text-[#92959d]">{formatDate(bill.incurred_on)}</p>
+                </div>
+                <p className="font-semibold text-[#777a82]">{formatInr(bill.total_amount)}</p>
+              </Link>
+            ))}
+          </div>
+        </details>
+      )}
     </main>
   );
 }
