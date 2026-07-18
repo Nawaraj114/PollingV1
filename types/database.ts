@@ -11,7 +11,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
-          avatar_url: string | null;
+          avatar_path: string | null;
           created_at: string;
           full_name: string;
           id: string;
@@ -19,7 +19,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          avatar_url?: string | null;
+          avatar_path?: string | null;
           created_at?: string;
           full_name: string;
           id: string;
@@ -27,7 +27,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          avatar_url?: string | null;
+          avatar_path?: string | null;
           full_name?: string;
           updated_at?: string;
         };

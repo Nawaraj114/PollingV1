@@ -8,7 +8,10 @@ export default async function ApplicationLayout({
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] pb-24 md:pb-0">
-      <AppNavigation viewerName={viewer.fullName} />
+      <AppNavigation
+        viewerAvatarUrl={viewer.avatarUrl}
+        viewerName={viewer.fullName}
+      />
       {children}
     </div>
   );

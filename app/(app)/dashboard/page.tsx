@@ -69,13 +69,13 @@ export default async function DashboardPage() {
         <div>
           <div className="eyebrow">
             <Sparkles size={14} className="text-[#1473e6]" aria-hidden="true" />
-            Foundation is ready
+            Private access is active
           </div>
           <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
             Good to see you, {firstName}.
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-8 text-[#74777f]">
-            Your circle has a home. Each module will come alive as we move through the build phases.
+            Your member directory and account controls are ready. Billing is the next module in the build plan.
           </p>
         </div>
 
@@ -124,12 +124,12 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Build progress</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Phase 0 · Foundation</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Phase 1 · Auth &amp; Access</h2>
             </div>
-            <span className="rounded-full bg-[#163d68] px-3 py-1.5 text-xs font-semibold text-[#75baff]">Ready to test</span>
+            <span className="rounded-full bg-[#163d68] px-3 py-1.5 text-xs font-semibold text-[#75baff]">Phase preview</span>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {["Next.js app shell", "Supabase authentication", "Profile creation trigger"].map((item) => (
+            {["Invite-only membership", "Profile and avatar controls", "Default-deny data access"].map((item) => (
               <div className="flex items-center gap-2 rounded-2xl border border-white/9 bg-white/5 px-4 py-3 text-sm" key={item}>
                 <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#1473e6]">
                   <Check size={12} strokeWidth={3} aria-hidden="true" />
