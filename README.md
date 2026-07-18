@@ -4,7 +4,7 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 4 — Payment & Confirmation Flow (preview branch)
+Phase 5 — Polling Module (preview branch)
 
 - Password re-authentication before a participant can accept an allocation
 - Database-enforced fresh-session check for acceptance
@@ -15,11 +15,14 @@ Phase 4 — Payment & Confirmation Flow (preview branch)
 - Password-confirmed receipt actions are restricted to the bill creator
 - Database-triggered settlement after every participant payment is confirmed
 - Append-only, trigger-generated allocation history
+- Single- and multiple-choice circle polls with optional expiry
+- Atomic, database-enforced one-time ballots
+- Authenticated Realtime updates for votes and creator-closed polls
 - Deterministic integer-paisa split calculator with 25 unit tests
 - Phase 1 invite-only authentication and Phase 2 billing creation remain active
 - GitHub Actions checks for linting, tests, types, and production builds
 
-Payment transitions are enforced by database triggers as well as server actions. A bill cannot settle early, and neither a participant nor the biller can silently skip or reverse a payment state.
+Polling writes use database functions so poll creation, multiple-choice ballots, expiry checks, and one-vote rules cannot be bypassed through the browser. Chat remains deferred and is not part of this build.
 
 ## Local setup
 
