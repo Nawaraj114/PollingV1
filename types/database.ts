@@ -60,12 +60,15 @@ export type Database = {
           auth_status: "authenticated" | "disputed" | "pending";
           authenticated_at: string | null;
           bill_id: string;
+          confirmed_at: string | null;
           created_at: string;
           dispute_note: string | null;
           disputed_at: string | null;
           id: string;
           owed_amount: number;
+          paid_at: string | null;
           participant_id: string;
+          payment_status: "confirmed_paid" | "marked_paid" | "unpaid";
           split_method: "automatic" | "breakdown" | "explicit";
           updated_at: string;
         };
@@ -74,12 +77,15 @@ export type Database = {
           auth_status?: "authenticated" | "disputed" | "pending";
           authenticated_at?: string | null;
           bill_id: string;
+          confirmed_at?: string | null;
           created_at?: string;
           dispute_note?: string | null;
           disputed_at?: string | null;
           id?: string;
           owed_amount: number;
+          paid_at?: string | null;
           participant_id: string;
+          payment_status?: "confirmed_paid" | "marked_paid" | "unpaid";
           split_method: "automatic" | "breakdown" | "explicit";
           updated_at?: string;
         };
@@ -88,12 +94,15 @@ export type Database = {
           auth_status?: "authenticated" | "disputed" | "pending";
           authenticated_at?: string | null;
           bill_id?: string;
+          confirmed_at?: string | null;
           created_at?: string;
           dispute_note?: string | null;
           disputed_at?: string | null;
           id?: string;
           owed_amount?: number;
+          paid_at?: string | null;
           participant_id?: string;
+          payment_status?: "confirmed_paid" | "marked_paid" | "unpaid";
           split_method?: "automatic" | "breakdown" | "explicit";
           updated_at?: string;
         };
@@ -109,9 +118,12 @@ export type Database = {
             | "amount_updated"
             | "authenticated"
             | "bill_deleted"
+            | "bill_settled"
             | "breakdown_updated"
+            | "confirmed_paid"
             | "created"
             | "disputed"
+            | "marked_paid"
             | "resubmitted";
           id: string;
         };
@@ -124,9 +136,12 @@ export type Database = {
             | "amount_updated"
             | "authenticated"
             | "bill_deleted"
+            | "bill_settled"
             | "breakdown_updated"
+            | "confirmed_paid"
             | "created"
             | "disputed"
+            | "marked_paid"
             | "resubmitted";
           id?: string;
         };
@@ -139,9 +154,12 @@ export type Database = {
             | "amount_updated"
             | "authenticated"
             | "bill_deleted"
+            | "bill_settled"
             | "breakdown_updated"
+            | "confirmed_paid"
             | "created"
             | "disputed"
+            | "marked_paid"
             | "resubmitted";
           id?: string;
         };
@@ -220,6 +238,10 @@ export type Database = {
         Args: { p_participant_id: string };
         Returns: undefined;
       };
+      confirm_bill_participant_paid: {
+        Args: { p_participant_id: string };
+        Returns: undefined;
+      };
       can_read_bill: {
         Args: { target_bill_id: string };
         Returns: boolean;
@@ -246,6 +268,10 @@ export type Database = {
       is_bill_biller: {
         Args: { target_bill_id: string };
         Returns: boolean;
+      };
+      mark_bill_participant_paid: {
+        Args: { p_participant_id: string };
+        Returns: undefined;
       };
       resubmit_bill_allocations: {
         Args: { p_allocations: Json; p_bill_id: string };
