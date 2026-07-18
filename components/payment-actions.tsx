@@ -45,11 +45,13 @@ function formatTimestamp(timestamp: string) {
 }
 
 export function ParticipantPaymentAction({
+  compact = false,
   confirmedAt,
   paidAt,
   participantId,
   paymentStatus,
 }: {
+  compact?: boolean;
   confirmedAt: string | null;
   paidAt: string | null;
   participantId: string;
@@ -59,7 +61,7 @@ export function ParticipantPaymentAction({
 
   if (paymentStatus === "confirmed_paid") {
     return (
-      <section className="mt-7 flex items-start gap-3 rounded-[1.5rem] border border-[#b9dfc5] bg-[#eefaf1] p-5 text-[#27663a]">
+      <section className={`${compact ? "mt-5 rounded-2xl p-4" : "mt-7 rounded-[1.5rem] p-5"} flex items-start gap-3 border border-[#b9dfc5] bg-[#eefaf1] text-[#27663a]`}>
         <BadgeCheck className="mt-0.5 shrink-0" size={20} aria-hidden="true" />
         <div>
           <h2 className="font-semibold">Your payment was confirmed</h2>
@@ -74,7 +76,7 @@ export function ParticipantPaymentAction({
 
   if (paymentStatus === "marked_paid") {
     return (
-      <section className="mt-7 flex items-start gap-3 rounded-[1.5rem] border border-[#9cc9ff] bg-[#f7fbff] p-5 text-[#285e99]">
+      <section className={`${compact ? "mt-5 rounded-2xl p-4" : "mt-7 rounded-[1.5rem] p-5"} flex items-start gap-3 border border-[#9cc9ff] bg-[#f7fbff] text-[#285e99]`}>
         <Clock3 className="mt-0.5 shrink-0" size={20} aria-hidden="true" />
         <div>
           <h2 className="font-semibold">Waiting for receipt confirmation</h2>
@@ -88,7 +90,7 @@ export function ParticipantPaymentAction({
   }
 
   return (
-    <section className="mt-7 rounded-[1.7rem] border border-[#9cc9ff] bg-white p-5 shadow-[0_10px_35px_rgba(20,115,230,0.08)] sm:p-7">
+    <section className={compact ? "mt-5 border-t border-[#dceafb] pt-5" : "mt-7 rounded-[1.7rem] border border-[#9cc9ff] bg-white p-5 shadow-[0_10px_35px_rgba(20,115,230,0.08)] sm:p-7"}>
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
           <BanknoteArrowUp size={19} aria-hidden="true" />

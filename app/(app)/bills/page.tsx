@@ -1,30 +1,29 @@
-import {
-  ArrowRight,
-  CalendarDays,
-  CirclePlus,
-  ReceiptText,
-  UserRound,
-} from "lucide-react";
+import { CirclePlus, ReceiptText } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 
+import { BillFeedCard } from "@/components/bill-feed-card";
 import { requireViewer } from "@/lib/auth/session";
-import { formatInr } from "@/lib/bills/money";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Bills" };
 
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(new Date(`${date}T00:00:00Z`));
-}
-export default async function BillsPage() {
+export default async function BillsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bill?: string }>;
+}) {
   const viewer = await requireViewer();
   const supabase = await createClient();
+  const { bill: expandedBillId } = await searchParams;
+  const requestHeaders = await headers();
+  const requestHost = (
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? ""
+  )
+    .split(",")[0]
+    .trim()
+    .replace(/:\d+$/u, "");
   const { data: bills, error } = await supabase
     .from("bills")
     .select("biller_id, category_id, created_at, deleted_at, description, id, incurred_on, status, total_amount")
@@ -32,18 +31,116 @@ export default async function BillsPage() {
     .order("created_at", { ascending: false });
 
   const billIds = (bills ?? []).map(({ id }) => id);
-  const [{ data: categories }, { data: profiles }, participantResult] = await Promise.all([
+  const [
+    { data: categories },
+    { data: profiles },
+    participantResult,
+    { data: currentSitePasskey },
+  ] = await Promise.all([
     supabase.from("bill_categories").select("id, name"),
     supabase.from("profiles").select("full_name, id"),
     billIds.length
-      ? supabase.from("bill_participants").select("auth_status, bill_id, owed_amount, participant_id, payment_status").in("bill_id", billIds)
+      ? supabase
+          .from("bill_participants")
+          .select("auth_method, auth_status, authenticated_at, bill_id, confirmed_at, dispute_note, id, owed_amount, paid_at, participant_id, payment_status, split_method")
+          .in("bill_id", billIds)
+          .order("created_at")
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("webauthn_credentials")
+      .select("id")
+      .eq("user_id", viewer.id)
+      .eq("rp_id", requestHost)
+      .limit(1)
+      .maybeSingle(),
   ]);
-  const categoryById = new Map((categories ?? []).map((category) => [category.id, category.name]));
-  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
   const participants = participantResult.data ?? [];
+  const participantRowIds = participants.map(({ id }) => id);
+  const [{ data: lineItems }, { data: history }] = participantRowIds.length
+    ? await Promise.all([
+        supabase
+          .from("bill_line_items")
+          .select("amount, bill_participant_id, category_id, id")
+          .in("bill_participant_id", participantRowIds)
+          .order("created_at"),
+        supabase
+          .from("bill_status_history")
+          .select("actor_id, bill_participant_id, created_at, event_data, event_type, id")
+          .in("bill_participant_id", participantRowIds)
+          .order("created_at")
+          .order("id"),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const categoryById = new Map(
+    (categories ?? []).map((category) => [category.id, category.name]),
+  );
+  const profileById = new Map(
+    (profiles ?? []).map((profile) => [profile.id, profile.full_name]),
+  );
   const activeBills = (bills ?? []).filter(({ deleted_at }) => !deleted_at);
   const deletedBills = (bills ?? []).filter(({ deleted_at }) => Boolean(deleted_at));
+  const hasPasskey = Boolean(currentSitePasskey);
+
+  function renderBill(bill: NonNullable<typeof bills>[number]) {
+    const billParticipants = participants.filter(
+      ({ bill_id }) => bill_id === bill.id,
+    );
+    const billParticipantIds = new Set(
+      billParticipants.map(({ id }) => id),
+    );
+
+    return (
+      <BillFeedCard
+        bill={{
+          billerId: bill.biller_id,
+          billerName: profileById.get(bill.biller_id) ?? "Circle member",
+          categoryName: categoryById.get(bill.category_id) ?? "Bill",
+          deletedAt: bill.deleted_at,
+          description: bill.description,
+          id: bill.id,
+          incurredOn: bill.incurred_on,
+          status: bill.status,
+          totalAmount: bill.total_amount,
+        }}
+        hasPasskey={hasPasskey}
+        history={(history ?? [])
+          .filter(({ bill_participant_id }) => billParticipantIds.has(bill_participant_id))
+          .map((event) => ({
+            actorId: event.actor_id,
+            actorName: profileById.get(event.actor_id) ?? "Circle member",
+            createdAt: event.created_at,
+            eventData: event.event_data,
+            eventType: event.event_type,
+            id: event.id,
+            participantId: event.bill_participant_id,
+          }))}
+        initiallyExpanded={bill.id === expandedBillId}
+        key={bill.id}
+        participants={billParticipants.map((participant) => ({
+          authMethod: participant.auth_method,
+          authenticatedAt: participant.authenticated_at,
+          authStatus: participant.auth_status,
+          confirmedAt: participant.confirmed_at,
+          disputeNote: participant.dispute_note,
+          id: participant.id,
+          lineItems: (lineItems ?? [])
+            .filter(({ bill_participant_id }) => bill_participant_id === participant.id)
+            .map((lineItem) => ({
+              amount: lineItem.amount,
+              categoryName: categoryById.get(lineItem.category_id) ?? "Category",
+              id: lineItem.id,
+            })),
+          name: profileById.get(participant.participant_id) ?? "Circle member",
+          owedAmount: participant.owed_amount,
+          paidAt: participant.paid_at,
+          participantId: participant.participant_id,
+          paymentStatus: participant.payment_status,
+          splitMethod: participant.split_method,
+        }))}
+        viewerId={viewer.id}
+      />
+    );
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -53,9 +150,11 @@ export default async function BillsPage() {
             <ReceiptText size={14} className="text-[#1473e6]" aria-hidden="true" />
             Billing trust controls
           </div>
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">My bills</h1>
+          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+            My bills
+          </h1>
           <p className="mt-3 max-w-xl text-lg leading-8 text-[#74777f]">
-            Bills you paid and bills where a friend included you.
+            Review, accept, and record payments without leaving this page.
           </p>
         </div>
         <Link className="button button-primary h-12 px-5" href="/bills/new">
@@ -65,7 +164,7 @@ export default async function BillsPage() {
 
       {error && (
         <div className="mt-8 rounded-2xl border border-[#f1c5bf] bg-[#fff3f1] px-5 py-4 text-sm text-[#9e342a]">
-          Billing data could not be loaded. Confirm that the Phase 3 migration has been applied.
+          Billing data could not be loaded. Refresh and try again.
         </div>
       )}
 
@@ -74,83 +173,20 @@ export default async function BillsPage() {
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
             <ReceiptText size={25} aria-hidden="true" />
           </span>
-          <h2 className="mt-5 text-xl font-semibold tracking-[-0.03em]">No active bills in your circle</h2>
-          <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">Create a bill and let the tested split calculator assign every paisa.</p>
-          <Link className="button button-dark mt-6" href="/bills/new">Create your first bill</Link>
+          <h2 className="mt-5 text-xl font-semibold tracking-[-0.03em]">
+            No active bills in your circle
+          </h2>
+          <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">
+            Create a bill and let the tested split calculator assign every paisa.
+          </p>
+          <Link className="button button-dark mt-6" href="/bills/new">
+            Create your first bill
+          </Link>
         </section>
       )}
 
-      <section className="mt-9 grid gap-4" aria-label="Bills">
-        {activeBills.map((bill) => {
-          const billParticipants = participants.filter(({ bill_id }) => bill_id === bill.id);
-          const viewerAllocation = billParticipants.find(({ participant_id }) => participant_id === viewer.id);
-          const billerName = profileById.get(bill.biller_id) ?? "Circle member";
-          const acceptedCount = billParticipants.filter(
-            ({ auth_status }) => auth_status === "authenticated",
-          ).length;
-          const hasDispute = billParticipants.some(
-            ({ auth_status }) => auth_status === "disputed",
-          );
-          const confirmedCount = billParticipants.filter(
-            ({ payment_status }) => payment_status === "confirmed_paid",
-          ).length;
-          const hasMarkedPayment = billParticipants.some(
-            ({ payment_status }) => payment_status === "marked_paid",
-          );
-          const viewerStatus = bill.status === "settled"
-            ? "Settled"
-            : viewerAllocation?.payment_status === "confirmed_paid"
-              ? "Payment confirmed"
-              : viewerAllocation?.payment_status === "marked_paid"
-                ? "Awaiting receipt confirmation"
-                : viewerAllocation
-                  ? {
-                      authenticated: "Accepted · payment due",
-                      disputed: "You disputed",
-                      pending: "Needs your review",
-                    }[viewerAllocation.auth_status]
-                  : bill.biller_id === viewer.id && hasMarkedPayment
-                    ? "Confirm a payment"
-            : hasDispute
-              ? "Dispute needs attention"
-              : `${acceptedCount}/${billParticipants.length} accepted`;
-
-          return (
-            <Link
-              className="group grid gap-5 rounded-[1.6rem] border border-black/7 bg-white p-5 shadow-[0_9px_30px_rgba(34,37,43,0.035)] hover:-translate-y-0.5 hover:shadow-[0_15px_38px_rgba(34,37,43,0.08)] sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
-              href={`/bills/${bill.id}`}
-              key={bill.id}
-            >
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#1767bf]">
-                    {categoryById.get(bill.category_id) ?? "Bill"}
-                  </span>
-                  <span className="rounded-full bg-[#f1f2f3] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#70737a]">
-                    {viewerStatus}
-                  </span>
-                </div>
-                <h2 className="mt-3 truncate text-xl font-semibold tracking-[-0.035em]">{bill.description}</h2>
-                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#81848c]">
-                  <span className="inline-flex items-center gap-1.5"><CalendarDays size={14} aria-hidden="true" /> {formatDate(bill.incurred_on)}</span>
-                  <span className="inline-flex items-center gap-1.5"><UserRound size={14} aria-hidden="true" /> Paid by {bill.biller_id === viewer.id ? "you" : billerName}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-5 sm:justify-end">
-                <div className="text-left sm:text-right">
-                  <p className="text-xs font-medium text-[#92959d]">{viewerAllocation ? "You owe" : "Bill total"}</p>
-                  <p className="mt-1 text-xl font-semibold tracking-[-0.035em]">{formatInr(viewerAllocation?.owed_amount ?? bill.total_amount)}</p>
-                  <p className="mt-1 text-xs text-[#92959d]">
-                    {bill.status === "settled"
-                      ? "All payments confirmed"
-                      : `${confirmedCount} of ${billParticipants.length} payments confirmed`}
-                  </p>
-                </div>
-                <ArrowRight className="text-[#a6a8ae] group-hover:translate-x-1 group-hover:text-[#202124]" size={19} aria-hidden="true" />
-              </div>
-            </Link>
-          );
-        })}
+      <section className="mt-9 grid gap-5" aria-label="Active bills">
+        {activeBills.map(renderBill)}
       </section>
 
       {deletedBills.length > 0 && (
@@ -161,24 +197,8 @@ export default async function BillsPage() {
           <p className="mt-2 text-sm leading-6 text-[#92959d]">
             Deleted bills are read-only and retained for everyone who was part of them.
           </p>
-          <div className="mt-4 grid gap-3">
-            {deletedBills.map((bill) => (
-              <Link
-                className="flex flex-col justify-between gap-3 rounded-2xl border border-[#e4e5e8] bg-[#f8f8f9] p-4 hover:border-[#cfd1d6] sm:flex-row sm:items-center"
-                href={`/bills/${bill.id}`}
-                key={bill.id}
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#f1f2f3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#777a82]">Deleted</span>
-                    <span className="text-xs text-[#92959d]">{categoryById.get(bill.category_id) ?? "Bill"}</span>
-                  </div>
-                  <p className="mt-2 truncate font-semibold text-[#555861]">{bill.description}</p>
-                  <p className="mt-1 text-xs text-[#92959d]">{formatDate(bill.incurred_on)}</p>
-                </div>
-                <p className="font-semibold text-[#777a82]">{formatInr(bill.total_amount)}</p>
-              </Link>
-            ))}
+          <div className="mt-4 grid gap-4">
+            {deletedBills.map(renderBill)}
           </div>
         </details>
       )}

@@ -8,6 +8,8 @@ Phase 7 — Passkey Step-Up Authentication (preview branch; Phase 6 chat remains
 
 - Passkey registration and removal from the account screen
 - Face, fingerprint, or device-PIN approval for sensitive billing actions
+- Single-page bill cards for accepting allocations, marking payments, and confirming receipts
+- Expandable bill breakdowns and audit history without a separate detail screen
 - One-time, five-minute WebAuthn challenges bound to the signed-in user, hostname, and billing action
 - Verified passkey acceptance and receipt confirmation with immutable audit attribution
 - Password re-authentication remains available as a fallback

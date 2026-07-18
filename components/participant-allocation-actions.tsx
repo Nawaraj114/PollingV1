@@ -37,12 +37,14 @@ function ActionMessage({ state }: { state: BillActionState }) {
 
 export function ParticipantAllocationActions({
   authenticatedAt,
+  compact = false,
   disputeNote,
   hasPasskey,
   participantId,
   status,
 }: {
   authenticatedAt: string | null;
+  compact?: boolean;
   disputeNote: string | null;
   hasPasskey: boolean;
   participantId: string;
@@ -59,7 +61,7 @@ export function ParticipantAllocationActions({
 
   if (status === "authenticated") {
     return (
-      <section className="mt-7 flex items-start gap-3 rounded-[1.5rem] border border-[#b9dfc5] bg-[#eefaf1] p-5 text-[#27663a]">
+      <section className={`${compact ? "mt-5" : "mt-7 rounded-[1.5rem] border border-[#b9dfc5] p-5"} flex items-start gap-3 bg-[#eefaf1] text-[#27663a]`}>
         <LockKeyhole className="mt-0.5 shrink-0" size={20} aria-hidden="true" />
         <div>
           <h2 className="font-semibold">You accepted this allocation</h2>
@@ -80,7 +82,7 @@ export function ParticipantAllocationActions({
 
   if (status === "disputed") {
     return (
-      <section className="mt-7 flex items-start gap-3 rounded-[1.5rem] border border-[#efd39a] bg-[#fff8e8] p-5 text-[#79571c]">
+      <section className={`${compact ? "mt-5 rounded-2xl p-4" : "mt-7 rounded-[1.5rem] p-5"} flex items-start gap-3 border border-[#efd39a] bg-[#fff8e8] text-[#79571c]`}>
         <AlertTriangle className="mt-0.5 shrink-0" size={20} aria-hidden="true" />
         <div>
           <h2 className="font-semibold">You disputed this allocation</h2>
@@ -94,7 +96,7 @@ export function ParticipantAllocationActions({
   }
 
   return (
-    <section className="mt-7 rounded-[1.7rem] border border-[#9cc9ff] bg-white p-5 shadow-[0_10px_35px_rgba(20,115,230,0.08)] sm:p-7">
+    <section className={compact ? "mt-5 border-t border-[#dceafb] pt-5" : "mt-7 rounded-[1.7rem] border border-[#9cc9ff] bg-white p-5 shadow-[0_10px_35px_rgba(20,115,230,0.08)] sm:p-7"}>
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
           <ShieldCheck size={19} aria-hidden="true" />
