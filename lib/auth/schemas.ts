@@ -6,6 +6,15 @@ const email = z
   .email("Enter a valid email address.")
   .max(254, "Email is too long.");
 
+export const resendConfirmationSchema = z.object({ email });
+
+export const confirmSignupSchema = z.object({
+  tokenHash: z
+    .string()
+    .min(20, "This confirmation link is incomplete.")
+    .max(512, "This confirmation link is invalid."),
+});
+
 const password = z
   .string()
   .min(8, "Use at least 8 characters.")

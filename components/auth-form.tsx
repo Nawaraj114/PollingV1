@@ -121,6 +121,18 @@ export function AuthForm({ errorMessage, mode, nextPath }: AuthFormProps) {
           </div>
         )}
 
+        {state.status === "success" && !isLogin && (
+          <p className="text-center text-sm text-[#777a82]">
+            No email yet?{" "}
+            <Link
+              className="font-semibold text-[#202124] underline decoration-[#b8bac0] underline-offset-4"
+              href="/resend-confirmation"
+            >
+              Request a new one
+            </Link>
+          </p>
+        )}
+
         <button className="button button-primary h-13 w-full" disabled={pending} type="submit">
           {pending ? (
             <>
@@ -135,6 +147,18 @@ export function AuthForm({ errorMessage, mode, nextPath }: AuthFormProps) {
           )}
         </button>
       </form>
+
+      {isLogin && (
+        <p className="mt-5 text-center text-sm text-[#777a82]">
+          Confirmation link expired?{" "}
+          <Link
+            className="font-semibold text-[#202124] underline decoration-[#b8bac0] underline-offset-4"
+            href="/resend-confirmation"
+          >
+            Send a new one
+          </Link>
+        </p>
+      )}
 
       <p className="mt-7 text-center text-sm text-[#777a82]">
         {isLogin ? "New to the circle?" : "Already have an account?"}{" "}
