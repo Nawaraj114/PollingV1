@@ -16,13 +16,13 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 0 — Project Foundation
 **Goal:** empty but fully wired skeleton — nothing feature-related yet, just the plumbing.
 
-- [ ] Create GitHub repo, initialize Next.js (App Router) + TypeScript project
-- [ ] Create Supabase project, note the project URL + anon key
-- [ ] Connect repo to Vercel, confirm a blank deploy works
-- [ ] Add `/lib/supabase/client.ts` (browser) and `/lib/supabase/server.ts` (server, cookie-aware)
-- [ ] Set up `/supabase/migrations` folder + Supabase CLI locally (`supabase init`, `supabase link`)
-- [ ] Create the `profiles` table migration + a Postgres trigger that auto-inserts a `profiles` row when a new `auth.users` row is created
-- [ ] Basic layout shell: top nav with placeholders for Polls / Bills / Chat, sign-in/sign-out
+- [x] Create GitHub repo, initialize Next.js (App Router) + TypeScript project
+- [x] Create Supabase project, note the project URL + anon key
+- [x] Connect repo to Vercel, confirm a blank deploy works
+- [x] Add `/lib/supabase/client.ts` (browser) and `/lib/supabase/server.ts` (server, cookie-aware)
+- [x] Set up `/supabase/migrations` folder + Supabase CLI locally (`supabase init`, `supabase link`)
+- [x] Create the `profiles` table migration + a Postgres trigger that auto-inserts a `profiles` row when a new `auth.users` row is created
+- [x] Basic layout shell: top nav with placeholders for Polls / Bills, sign-in/sign-out
 
 **Definition of Done:** you and one friend can both sign up, land on an empty dashboard, and see your names pulled from `profiles`.
 
@@ -31,10 +31,10 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 1 — Auth & Access
 **Goal:** everyone who should have access, has it — and only them.
 
-- [ ] Restrict sign-up: since this is a private 10–15 person app, either (a) disable public sign-up and create accounts yourself via the Supabase dashboard, or (b) use invite-only magic links
-- [ ] Enable Row Level Security on **every** table from the start (default-deny), even before other phases add their tables — it's much easier to build with RLS on from day one than to retrofit it later
-- [ ] `profiles`: everyone can read all profiles (small trusted group), only update their own
-- [ ] Basic account page: name, avatar
+- [x] Restrict sign-up: public signup is disabled and approved accounts are created through Supabase
+- [x] Enable Row Level Security on **every** table from the start (default-deny), even before other phases add their tables — it's much easier to build with RLS on from day one than to retrofit it later
+- [x] `profiles`: everyone can read all profiles (small trusted group), only update their own
+- [x] Basic account page: name, avatar
 
 **Definition of Done:** an outsider cannot self-register; logged-in users can see each other's names for tagging in polls/bills.
 

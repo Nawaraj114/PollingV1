@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LogOut,
   ReceiptText,
+  UserRound,
   Vote,
 } from "lucide-react";
 import Link from "next/link";
@@ -11,21 +12,23 @@ import { usePathname } from "next/navigation";
 
 import { signOut } from "@/lib/auth/actions";
 import { AppLogo } from "./app-logo";
+import { MemberAvatar } from "./member-avatar";
 
 const navigation = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/bills", icon: ReceiptText, label: "Bills" },
   { href: "/polls", icon: Vote, label: "Polls" },
+  { href: "/account", icon: UserRound, label: "Account" },
 ];
 
-export function AppNavigation({ viewerName }: { viewerName: string }) {
+export function AppNavigation({
+  viewerAvatarUrl,
+  viewerName,
+}: {
+  viewerAvatarUrl: string | null;
+  viewerName: string;
+}) {
   const pathname = usePathname();
-  const initials = viewerName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 
   return (
     <>
@@ -51,9 +54,9 @@ export function AppNavigation({ viewerName }: { viewerName: string }) {
             })}
           </nav>
           <div className="flex items-center gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-[#dcecff] text-xs font-bold text-[#125cad]" title={viewerName}>
-              {initials || "FC"}
-            </div>
+            <Link aria-label="Open account settings" href="/account">
+              <MemberAvatar avatarUrl={viewerAvatarUrl} name={viewerName} />
+            </Link>
             <form action={signOut}>
               <button className="grid h-10 w-10 place-items-center rounded-full text-[#73767d] hover:bg-white hover:text-[#202124]" title="Sign out" type="submit">
                 <LogOut size={18} aria-hidden="true" />

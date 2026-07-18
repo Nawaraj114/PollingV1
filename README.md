@@ -4,11 +4,13 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 0 — Project Foundation
+Phase 1 — Auth & Access
 
-- Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
+- Public registration disabled; only existing, administrator-created members can sign in
 - Cookie-based Supabase SSR authentication
-- Migration-managed `profiles` table with RLS and an Auth trigger
+- Migration-managed `profiles` table with group-read/self-update RLS
+- Private `avatars` Storage bucket with member-read/owner-write RLS
+- Account settings and authenticated member directory
 - Responsive application shell with Bills and Polls placeholders
 - GitHub Actions checks for linting, types, and production builds
 
@@ -70,7 +72,7 @@ npm run supabase:reset
 
 ## Supabase Auth configuration
 
-During Phase 0 testing, public email/password signup remains enabled so two test accounts can exercise the profile trigger. Phase 1 will replace this with private, invite-only access.
+Public signup is disabled in Phase 1. Add the small set of approved members from Supabase Dashboard → Authentication → Users. Creating an account there still runs the database trigger that creates its `profiles` row. Existing users can sign in normally; outsiders receive `signup_disabled` even if they call the Auth API directly.
 
 Hosted Auth URL settings are tracked in `supabase/config.toml`, including local development, the stable Phase 0 preview alias, and the production callback. After linking the intended project, deploy config changes with:
 
@@ -80,7 +82,9 @@ npx supabase config push
 
 Review the displayed diff before confirming because this command can also update Auth and Storage settings.
 
-If email confirmation is enabled, a new user follows the confirmation email before signing in. If it is disabled, signup creates a session immediately.
+The hosted default email sender is suitable only for limited testing. Until custom SMTP is configured, administrator-created and auto-confirmed test users are the reliable way to exercise private access.
+
+Avatar images are stored in a private bucket. The application generates one-hour signed URLs for authenticated members and never stores those temporary URLs in `profiles`.
 
 ## Vercel configuration
 

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type Viewer = {
+  avatarUrl: string | null;
   email: string;
   fullName: string;
   id: string;
@@ -26,7 +27,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("avatar_path, full_name")
     .eq("id", claims.sub)
     .maybeSingle();
 
@@ -35,8 +36,14 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       ? (claims.user_metadata as Record<string, unknown>)
       : {};
   const email = claimString(claims.email) ?? "Member";
+  const { data: avatar } = profile?.avatar_path
+    ? await supabase.storage
+        .from("avatars")
+        .createSignedUrl(profile.avatar_path, 60 * 60)
+    : { data: null };
 
   return {
+    avatarUrl: avatar?.signedUrl ?? null,
     email,
     fullName:
       profile?.full_name ??

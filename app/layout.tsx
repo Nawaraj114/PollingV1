@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     default: "FriendCircle",
     template: "%s · FriendCircle",
   },
-  description: "A private place for friends to plan, split bills, and chat.",
+  description: "A private place for friends to run polls and split bills.",
 };
 
 export const viewport: Viewport = {
