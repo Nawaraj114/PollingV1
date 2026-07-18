@@ -72,11 +72,13 @@ npm run supabase:reset
 
 During Phase 0 testing, public email/password signup remains enabled so two test accounts can exercise the profile trigger. Phase 1 will replace this with private, invite-only access.
 
-In Supabase Auth URL Configuration, set:
+Hosted Auth URL settings are tracked in `supabase/config.toml`, including local development, the stable Phase 0 preview alias, and the production callback. After linking the intended project, deploy config changes with:
 
-- Site URL to the production Vercel URL
-- An allowed redirect URL for `http://localhost:3000/auth/callback`
-- An allowed redirect URL for the Vercel preview deployment used for testing
+```bash
+npx supabase config push
+```
+
+Review the displayed diff before confirming because this command can also update Auth and Storage settings.
 
 If email confirmation is enabled, a new user follows the confirmation email before signing in. If it is disabled, signup creates a session immediately.
 
