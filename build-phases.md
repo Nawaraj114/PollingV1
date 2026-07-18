@@ -64,6 +64,7 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 - [x] Step-up auth v1 (fast path): before allowing the "Authenticate & Accept" click to actually write to the DB, re-prompt for password and verify via `supabase.auth.signInWithPassword` (or a short-lived re-auth check) — store `auth_method = 'password'`
 - [x] `bill_status_history` table + a trigger that logs every status transition automatically (don't rely on the app remembering to log it — do it at the DB level so it can never be skipped)
 - [x] Add the **dispute** path: participant can reject with a note instead of authenticating → `auth_status = 'disputed'` → unlocks that row for the biller to correct → re-submits to `pending`
+- [x] Creator-only bill deletion with password reconfirmation; retain the deleted bill and its history as an immutable audit record
 
 **Definition of Done:** try, as the biller, to edit an amount after your test friend has authenticated it — it should fail. Confirm the failure happens at the database level (test by calling the API directly, not just clicking through the UI).
 

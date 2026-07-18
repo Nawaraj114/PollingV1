@@ -10,6 +10,7 @@ Phase 3 — Locking, Step-Up Auth & Tamper Prevention (preview branch)
 - Database-enforced fresh-session check for acceptance
 - Accepted amounts, category breakdowns, and bill headers locked by triggers
 - Participant dispute notes and biller-only balanced resubmission
+- Creator-only, password-confirmed soft deletion with retained audit history
 - Append-only, trigger-generated allocation history
 - Deterministic integer-paisa split calculator with 25 unit tests
 - Phase 1 invite-only authentication and Phase 2 billing creation remain active
