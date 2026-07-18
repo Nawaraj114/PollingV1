@@ -12,8 +12,6 @@ export type AuthState = {
   status?: "error" | "success";
 };
 
-export const initialAuthState: AuthState = {};
-
 function safeNextPath(value: string | undefined) {
   return value?.startsWith("/") && !value.startsWith("//")
     ? value

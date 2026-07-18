@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useActionState } from "react";
 
 import {
-  initialAuthState,
   login,
   signup,
+  type AuthState,
 } from "@/lib/auth/actions";
+
+const initialAuthState: AuthState = {};
 
 type AuthFormProps = {
   errorMessage?: string;
