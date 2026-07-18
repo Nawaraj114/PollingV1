@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { requireViewer } from "@/lib/auth/session";
+import { requireViewerId } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import {
   BillSplitError,
@@ -67,27 +67,11 @@ export async function createBill(
     return errorState("Choose valid participants and complete every category line item.");
   }
 
-  const viewer = await requireViewer();
-  const supabase = await createClient();
+  const viewerId = await requireViewerId();
   const participantIds = participantResult.data.map(({ participantId }) => participantId);
 
-  if (participantIds.includes(viewer.id) || new Set(participantIds).size !== participantIds.length) {
+  if (participantIds.includes(viewerId) || new Set(participantIds).size !== participantIds.length) {
     return errorState("Every selected participant must be a different member of your circle.");
-  }
-
-  const [{ data: profiles }, { data: categories }] = await Promise.all([
-    supabase.from("profiles").select("id").in("id", participantIds),
-    supabase.from("bill_categories").select("id"),
-  ]);
-  const knownProfileIds = new Set((profiles ?? []).map(({ id }) => id));
-  const knownCategoryIds = new Set((categories ?? []).map(({ id }) => id));
-
-  if (participantIds.some((id) => !knownProfileIds.has(id))) {
-    return errorState("One of the selected participants is no longer available.");
-  }
-
-  if (parsed.data.categoryId && !knownCategoryIds.has(parsed.data.categoryId)) {
-    return errorState("The selected bill category is no longer available.");
   }
 
   const splitInputs: BillParticipantInput[] = [];
@@ -97,7 +81,6 @@ export async function createBill(
       const categoryIds = participant.lineItems.map(({ categoryId }) => categoryId);
 
       if (
-        categoryIds.some((id) => !knownCategoryIds.has(id)) ||
         new Set(categoryIds).size !== categoryIds.length
       ) {
         return errorState("Each breakdown category must be valid and used only once per person.");
@@ -115,6 +98,7 @@ export async function createBill(
     }
 
     const totalMinor = parseAmountToMinor(parsed.data.totalAmount);
+    const supabase = await createClient();
     const allocations = calculateBillSplit(totalMinor, splitInputs);
     const participantPayload = allocations.map((allocation) => {
       const source = participantResult.data.find(

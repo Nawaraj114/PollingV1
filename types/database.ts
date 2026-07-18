@@ -422,6 +422,10 @@ export type Database = {
       };
     };
     Functions: {
+      get_bill_feed: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       authenticate_bill_participant: {
         Args: { p_participant_id: string };
         Returns: undefined;

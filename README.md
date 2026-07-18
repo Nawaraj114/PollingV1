@@ -12,6 +12,9 @@ Phase 7 — Passkey Step-Up Authentication (preview branch; Phase 6 chat remains
 - Expandable bill breakdowns and audit history without a separate detail screen
 - Settled bills automatically leave the active Bills tab after every payment is confirmed
 - Realtime bill creation and lifecycle updates across signed-in browsers without manual refresh
+- Prefetched Bills and Polls routes with immediate loading feedback during navigation
+- Single-round-trip billing feed reads and parallel poll-feed reads for lower server latency
+- Batched avatar signing and database-authoritative creation validation to reduce form wait time
 - One-time, five-minute WebAuthn challenges bound to the signed-in user, hostname, and billing action
 - Verified passkey acceptance and receipt confirmation with immutable audit attribution
 - Password re-authentication remains available as a fallback

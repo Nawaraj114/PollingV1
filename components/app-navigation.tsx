@@ -46,6 +46,7 @@ export function AppNavigation({
                   }`}
                   href={href}
                   key={href}
+                  prefetch
                 >
                   <Icon size={17} aria-hidden="true" />
                   {label}
@@ -76,6 +77,7 @@ export function AppNavigation({
               className={`flex min-w-15 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-[10px] font-semibold ${active ? "bg-[#1473e6] text-white" : "text-white/55"}`}
               href={href}
               key={href}
+              prefetch
             >
               <Icon size={18} aria-hidden="true" />
               {label}

@@ -7,8 +7,19 @@ import { BillFeedCard } from "@/components/bill-feed-card";
 import { BillRealtimeRefresh } from "@/components/bill-realtime-refresh";
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 
 export const metadata: Metadata = { title: "Bills" };
+
+type PublicTables = Database["public"]["Tables"];
+type BillFeedPayload = {
+  bills: PublicTables["bills"]["Row"][];
+  categories: PublicTables["bill_categories"]["Row"][];
+  history: PublicTables["bill_status_history"]["Row"][];
+  line_items: PublicTables["bill_line_items"]["Row"][];
+  participants: PublicTables["bill_participants"]["Row"][];
+  profiles: PublicTables["profiles"]["Row"][];
+};
 
 export default async function BillsPage({
   searchParams,
@@ -25,28 +36,11 @@ export default async function BillsPage({
     .split(",")[0]
     .trim()
     .replace(/:\d+$/u, "");
-  const { data: bills, error } = await supabase
-    .from("bills")
-    .select("biller_id, category_id, created_at, deleted_at, description, id, incurred_on, status, total_amount")
-    .order("incurred_on", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  const billIds = (bills ?? []).map(({ id }) => id);
   const [
-    { data: categories },
-    { data: profiles },
-    participantResult,
+    { data: rawFeed, error },
     { data: currentSitePasskey },
   ] = await Promise.all([
-    supabase.from("bill_categories").select("id, name"),
-    supabase.from("profiles").select("full_name, id"),
-    billIds.length
-      ? supabase
-          .from("bill_participants")
-          .select("auth_method, auth_status, authenticated_at, bill_id, confirmed_at, dispute_note, id, owed_amount, paid_at, participant_id, payment_status, split_method")
-          .in("bill_id", billIds)
-          .order("created_at")
-      : Promise.resolve({ data: [] }),
+    supabase.rpc("get_bill_feed"),
     supabase
       .from("webauthn_credentials")
       .select("id")
@@ -55,36 +49,31 @@ export default async function BillsPage({
       .limit(1)
       .maybeSingle(),
   ]);
-  const participants = participantResult.data ?? [];
-  const participantRowIds = participants.map(({ id }) => id);
-  const [{ data: lineItems }, { data: history }] = participantRowIds.length
-    ? await Promise.all([
-        supabase
-          .from("bill_line_items")
-          .select("amount, bill_participant_id, category_id, id")
-          .in("bill_participant_id", participantRowIds)
-          .order("created_at"),
-        supabase
-          .from("bill_status_history")
-          .select("actor_id, bill_participant_id, created_at, event_data, event_type, id")
-          .in("bill_participant_id", participantRowIds)
-          .order("created_at")
-          .order("id"),
-      ])
-    : [{ data: [] }, { data: [] }];
+  const feed = (rawFeed ?? {
+    bills: [],
+    categories: [],
+    history: [],
+    line_items: [],
+    participants: [],
+    profiles: [],
+  }) as unknown as BillFeedPayload;
+  const bills = feed.bills;
+  const categories = feed.categories;
+  const profiles = feed.profiles;
+  const participants = feed.participants;
+  const lineItems = feed.line_items;
+  const history = feed.history;
   const categoryById = new Map(
-    (categories ?? []).map((category) => [category.id, category.name]),
+    categories.map((category) => [category.id, category.name]),
   );
   const profileById = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile.full_name]),
+    profiles.map((profile) => [profile.id, profile.full_name]),
   );
-  const activeBills = (bills ?? []).filter(
-    ({ deleted_at, status }) => !deleted_at && status !== "settled",
-  );
-  const deletedBills = (bills ?? []).filter(({ deleted_at }) => Boolean(deleted_at));
+  const activeBills = bills.filter(({ deleted_at }) => !deleted_at);
+  const deletedBills = bills.filter(({ deleted_at }) => Boolean(deleted_at));
   const hasPasskey = Boolean(currentSitePasskey);
 
-  function renderBill(bill: NonNullable<typeof bills>[number]) {
+  function renderBill(bill: (typeof bills)[number]) {
     const billParticipants = participants.filter(
       ({ bill_id }) => bill_id === bill.id,
     );
@@ -106,7 +95,7 @@ export default async function BillsPage({
           totalAmount: bill.total_amount,
         }}
         hasPasskey={hasPasskey}
-        history={(history ?? [])
+        history={history
           .filter(({ bill_participant_id }) => billParticipantIds.has(bill_participant_id))
           .map((event) => ({
             actorId: event.actor_id,
@@ -126,7 +115,7 @@ export default async function BillsPage({
           confirmedAt: participant.confirmed_at,
           disputeNote: participant.dispute_note,
           id: participant.id,
-          lineItems: (lineItems ?? [])
+          lineItems: lineItems
             .filter(({ bill_participant_id }) => bill_participant_id === participant.id)
             .map((lineItem) => ({
               amount: lineItem.amount,
@@ -160,7 +149,7 @@ export default async function BillsPage({
             Review, accept, and record payments without leaving this page.
           </p>
         </div>
-        <Link className="button button-primary h-12 px-5" href="/bills/new">
+        <Link className="button button-primary h-12 px-5" href="/bills/new" prefetch>
           <CirclePlus size={18} aria-hidden="true" /> Create bill
         </Link>
       </section>
@@ -186,7 +175,7 @@ export default async function BillsPage({
           <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">
             Create a bill and let the tested split calculator assign every paisa.
           </p>
-          <Link className="button button-dark mt-6" href="/bills/new">
+          <Link className="button button-dark mt-6" href="/bills/new" prefetch>
             Create your first bill
           </Link>
         </section>

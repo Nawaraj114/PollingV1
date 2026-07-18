@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { requireViewer } from "@/lib/auth/session";
+import { requireViewer, requireViewerId } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import {
   closePollSchema,
@@ -62,7 +62,7 @@ export async function createPoll(
     return { errors: { expiresAt: ["Choose a future expiry time."] }, status: "error" };
   }
 
-  await requireViewer();
+  await requireViewerId();
   const supabase = await createClient();
   const { data: pollId, error } = await supabase.rpc("create_poll", {
     p_allows_multiple: parsed.data.allowsMultiple === "multiple",

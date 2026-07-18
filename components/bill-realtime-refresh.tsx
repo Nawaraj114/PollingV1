@@ -34,7 +34,9 @@ export function BillRealtimeRefresh() {
     });
 
     channel.subscribe((status) => {
-      setLive(status === "SUBSCRIBED");
+      const subscribed = status === "SUBSCRIBED";
+      setLive(subscribed);
+      if (subscribed) scheduleRefresh();
     });
 
     return () => {

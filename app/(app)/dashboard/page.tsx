@@ -105,6 +105,7 @@ export default async function DashboardPage() {
             className="group rounded-[1.7rem] border border-black/7 bg-white p-6 shadow-[0_10px_35px_rgba(34,37,43,0.04)] hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(34,37,43,0.09)]"
             href={href}
             key={label}
+            prefetch
           >
             <div className="flex items-start justify-between">
               <span className={`grid h-12 w-12 place-items-center rounded-2xl text-white ${accent}`}>
