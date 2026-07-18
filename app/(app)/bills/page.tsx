@@ -49,7 +49,7 @@ export default async function BillsPage() {
         <div>
           <div className="eyebrow">
             <ReceiptText size={14} className="text-[#1473e6]" aria-hidden="true" />
-            Billing core
+            Billing trust controls
           </div>
           <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">My bills</h1>
           <p className="mt-3 max-w-xl text-lg leading-8 text-[#74777f]">
@@ -63,7 +63,7 @@ export default async function BillsPage() {
 
       {error && (
         <div className="mt-8 rounded-2xl border border-[#f1c5bf] bg-[#fff3f1] px-5 py-4 text-sm text-[#9e342a]">
-          Billing data could not be loaded. Confirm that the Phase 2 migration has been applied.
+          Billing data could not be loaded. Confirm that the Phase 3 migration has been applied.
         </div>
       )}
 

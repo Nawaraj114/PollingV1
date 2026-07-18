@@ -66,6 +66,7 @@ export function ParticipantAllocationActions({
               ? ` since ${new Intl.DateTimeFormat("en-IN", {
                   dateStyle: "medium",
                   timeStyle: "short",
+                  timeZone: "Asia/Kathmandu",
                 }).format(new Date(authenticatedAt))}`
               : ""}.
           </p>
@@ -154,4 +155,3 @@ export function ParticipantAllocationActions({
     </section>
   );
 }
-
