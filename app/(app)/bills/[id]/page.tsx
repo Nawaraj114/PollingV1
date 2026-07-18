@@ -1,6 +1,8 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  BadgeCheck,
+  BanknoteArrowUp,
   CalendarDays,
   CheckCircle2,
   CircleDot,
@@ -18,6 +20,10 @@ import { DisputeResolutionForm } from "@/components/dispute-resolution-form";
 import { DeleteBillForm } from "@/components/delete-bill-form";
 import { MemberAvatar } from "@/components/member-avatar";
 import { ParticipantAllocationActions } from "@/components/participant-allocation-actions";
+import {
+  ConfirmReceiptForm,
+  ParticipantPaymentAction,
+} from "@/components/payment-actions";
 import { requireViewer } from "@/lib/auth/session";
 import { formatInr } from "@/lib/bills/money";
 import { createClient } from "@/lib/supabase/server";
@@ -71,7 +77,7 @@ export default async function BillDetailPage({
     supabase.from("profiles").select("avatar_path, full_name, id"),
     supabase
       .from("bill_participants")
-      .select("auth_method, auth_status, authenticated_at, dispute_note, disputed_at, id, owed_amount, participant_id, split_method")
+      .select("auth_method, auth_status, authenticated_at, confirmed_at, dispute_note, disputed_at, id, owed_amount, paid_at, participant_id, payment_status, split_method")
       .eq("bill_id", bill.id)
       .order("created_at"),
   ]);
@@ -109,6 +115,9 @@ export default async function BillDetailPage({
   const lockedTotal = (participants ?? [])
     .filter(({ auth_status }) => auth_status === "authenticated")
     .reduce((total, participant) => total + participant.owed_amount, 0);
+  const markedPayments = (participants ?? []).filter(
+    ({ payment_status }) => payment_status === "marked_paid",
+  );
 
   await Promise.all(
     (profiles ?? []).map(async (profile) => {
@@ -148,7 +157,9 @@ export default async function BillDetailPage({
         <div className="border-t border-white/8 bg-white/4 px-6 py-4 text-sm text-white/55 sm:px-9">
           {isDeleted
             ? `Deleted by the bill creator on ${formatTimestamp(bill.deleted_at!)}. This record and its audit history are read-only.`
-            : "Phase 3 requires each participant to accept or dispute their allocation. Accepted amounts are database-locked; payment arrives in Phase 4."}
+            : bill.status === "settled"
+              ? "Every participant payment has been confirmed. The database automatically settled this bill."
+              : "After accepting a locked allocation, each participant can mark payment as sent for the biller to confirm."}
         </div>
       </section>
 
@@ -166,16 +177,24 @@ export default async function BillDetailPage({
             const profile = profilesById.get(participant.participant_id);
             const personLineItems = (lineItems ?? []).filter(({ bill_participant_id }) => bill_participant_id === participant.id);
             const isViewer = participant.participant_id === viewer.id;
-            const statusStyles = {
-              authenticated: "bg-[#eaf8ee] text-[#2f7042]",
-              disputed: "bg-[#fff0d0] text-[#94620f]",
-              pending: "bg-[#f0f1f3] text-[#777a82]",
-            }[participant.auth_status];
-            const statusLabel = {
-              authenticated: "Accepted & locked",
-              disputed: "Disputed",
-              pending: "Awaiting acceptance",
-            }[participant.auth_status];
+            const statusStyles = participant.payment_status === "confirmed_paid"
+              ? "bg-[#eaf8ee] text-[#2f7042]"
+              : participant.payment_status === "marked_paid"
+                ? "bg-[#edf5ff] text-[#1767bf]"
+                : {
+                    authenticated: "bg-[#f0effc] text-[#625cb5]",
+                    disputed: "bg-[#fff0d0] text-[#94620f]",
+                    pending: "bg-[#f0f1f3] text-[#777a82]",
+                  }[participant.auth_status];
+            const statusLabel = participant.payment_status === "confirmed_paid"
+              ? "Payment confirmed"
+              : participant.payment_status === "marked_paid"
+                ? "Awaiting receipt"
+                : {
+                    authenticated: "Accepted & unpaid",
+                    disputed: "Disputed",
+                    pending: "Awaiting acceptance",
+                  }[participant.auth_status];
 
             return (
               <article className={`rounded-[1.5rem] border bg-white p-5 ${isViewer ? "border-[#8fc3ff] shadow-[0_8px_30px_rgba(20,115,230,0.08)]" : "border-black/7"}`} key={participant.id}>
@@ -208,6 +227,14 @@ export default async function BillDetailPage({
                     “{participant.dispute_note}”
                   </div>
                 )}
+                {participant.paid_at && (
+                  <p className="mt-3 text-xs text-[#92959d]">
+                    Marked paid {formatTimestamp(participant.paid_at)}
+                    {participant.confirmed_at
+                      ? ` · receipt confirmed ${formatTimestamp(participant.confirmed_at)}`
+                      : " · waiting for biller confirmation"}
+                  </p>
+                )}
               </article>
             );
           })}
@@ -221,6 +248,41 @@ export default async function BillDetailPage({
           participantId={viewerParticipant.id}
           status={viewerParticipant.auth_status}
         />
+      )}
+
+      {viewerParticipant?.auth_status === "authenticated" && !isDeleted && (
+        <ParticipantPaymentAction
+          confirmedAt={viewerParticipant.confirmed_at}
+          paidAt={viewerParticipant.paid_at}
+          participantId={viewerParticipant.id}
+          paymentStatus={viewerParticipant.payment_status}
+        />
+      )}
+
+      {isBiller && markedPayments.length > 0 && !isDeleted && (
+        <section className="mt-7 rounded-[1.7rem] border border-[#9cc9ff] bg-white p-5 shadow-[0_10px_35px_rgba(20,115,230,0.08)] sm:p-7">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#edf5ff] text-[#1473e6]">
+              <BadgeCheck size={19} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="font-semibold tracking-[-0.02em]">Confirm received payments</h2>
+              <p className="mt-1 text-sm leading-6 text-[#74777f]">
+                Confirm only after the money reaches you. Each confirmation requires your password and is permanently audited.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {markedPayments.map((participant) => (
+              <ConfirmReceiptForm
+                amount={participant.owed_amount}
+                key={participant.id}
+                name={profilesById.get(participant.participant_id)?.full_name ?? "Circle member"}
+                participantId={participant.id}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {isBiller && hasDispute && !isDeleted && (
@@ -277,18 +339,24 @@ export default async function BillDetailPage({
               amount_updated: `${actorName} corrected ${participantName}'s allocation to ${formatInr(Number(eventValue(event.event_data, "owed_amount") ?? participant?.owed_amount ?? 0))}.`,
               authenticated: `${participantName} accepted and database-locked the allocation with password authentication.`,
               bill_deleted: `${actorName} deleted the bill. The record became read-only and moved out of active bills.`,
+              bill_settled: `${actorName} confirmed the final payment. The database automatically settled the bill.`,
               breakdown_updated: `${actorName} updated ${participantName}'s category breakdown.`,
+              confirmed_paid: `${actorName} confirmed receipt of ${participantName}'s payment.`,
               created: `${actorName} created ${participantName}'s ${formatInr(Number(eventValue(event.event_data, "owed_amount") ?? participant?.owed_amount ?? 0))} allocation.`,
               disputed: `${participantName} disputed the allocation: “${String(eventValue(event.event_data, "note") ?? "Correction requested") }”`,
+              marked_paid: `${participantName} marked the payment as sent.`,
               resubmitted: `${actorName} corrected or resubmitted ${participantName}'s allocation for a new review.`,
             }[event.event_type];
             const EventIcon = {
               amount_updated: RotateCcw,
               authenticated: LockKeyhole,
               bill_deleted: AlertTriangle,
+              bill_settled: BadgeCheck,
               breakdown_updated: RotateCcw,
+              confirmed_paid: BadgeCheck,
               created: CircleDot,
               disputed: AlertTriangle,
+              marked_paid: BanknoteArrowUp,
               resubmitted: RotateCcw,
             }[event.event_type];
 

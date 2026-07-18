@@ -36,7 +36,7 @@ export default async function BillsPage() {
     supabase.from("bill_categories").select("id, name"),
     supabase.from("profiles").select("full_name, id"),
     billIds.length
-      ? supabase.from("bill_participants").select("auth_status, bill_id, owed_amount, participant_id").in("bill_id", billIds)
+      ? supabase.from("bill_participants").select("auth_status, bill_id, owed_amount, participant_id, payment_status").in("bill_id", billIds)
       : Promise.resolve({ data: [] }),
   ]);
   const categoryById = new Map((categories ?? []).map((category) => [category.id, category.name]));
@@ -91,12 +91,26 @@ export default async function BillsPage() {
           const hasDispute = billParticipants.some(
             ({ auth_status }) => auth_status === "disputed",
           );
-          const viewerStatus = viewerAllocation
-            ? {
-                authenticated: "Accepted & locked",
-                disputed: "You disputed",
-                pending: "Needs your review",
-              }[viewerAllocation.auth_status]
+          const confirmedCount = billParticipants.filter(
+            ({ payment_status }) => payment_status === "confirmed_paid",
+          ).length;
+          const hasMarkedPayment = billParticipants.some(
+            ({ payment_status }) => payment_status === "marked_paid",
+          );
+          const viewerStatus = bill.status === "settled"
+            ? "Settled"
+            : viewerAllocation?.payment_status === "confirmed_paid"
+              ? "Payment confirmed"
+              : viewerAllocation?.payment_status === "marked_paid"
+                ? "Awaiting receipt confirmation"
+                : viewerAllocation
+                  ? {
+                      authenticated: "Accepted · payment due",
+                      disputed: "You disputed",
+                      pending: "Needs your review",
+                    }[viewerAllocation.auth_status]
+                  : bill.biller_id === viewer.id && hasMarkedPayment
+                    ? "Confirm a payment"
             : hasDispute
               ? "Dispute needs attention"
               : `${acceptedCount}/${billParticipants.length} accepted`;
@@ -126,7 +140,11 @@ export default async function BillsPage() {
                 <div className="text-left sm:text-right">
                   <p className="text-xs font-medium text-[#92959d]">{viewerAllocation ? "You owe" : "Bill total"}</p>
                   <p className="mt-1 text-xl font-semibold tracking-[-0.035em]">{formatInr(viewerAllocation?.owed_amount ?? bill.total_amount)}</p>
-                  <p className="mt-1 text-xs text-[#92959d]">{acceptedCount} of {billParticipants.length} locked</p>
+                  <p className="mt-1 text-xs text-[#92959d]">
+                    {bill.status === "settled"
+                      ? "All payments confirmed"
+                      : `${confirmedCount} of ${billParticipants.length} payments confirmed`}
+                  </p>
                 </div>
                 <ArrowRight className="text-[#a6a8ae] group-hover:translate-x-1 group-hover:text-[#202124]" size={19} aria-hidden="true" />
               </div>
