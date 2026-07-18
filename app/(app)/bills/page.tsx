@@ -36,7 +36,7 @@ export default async function BillsPage() {
     supabase.from("bill_categories").select("id, name"),
     supabase.from("profiles").select("full_name, id"),
     billIds.length
-      ? supabase.from("bill_participants").select("bill_id, owed_amount, participant_id").in("bill_id", billIds)
+      ? supabase.from("bill_participants").select("auth_status, bill_id, owed_amount, participant_id").in("bill_id", billIds)
       : Promise.resolve({ data: [] }),
   ]);
   const categoryById = new Map((categories ?? []).map((category) => [category.id, category.name]));
@@ -83,6 +83,21 @@ export default async function BillsPage() {
           const billParticipants = participants.filter(({ bill_id }) => bill_id === bill.id);
           const viewerAllocation = billParticipants.find(({ participant_id }) => participant_id === viewer.id);
           const billerName = profileById.get(bill.biller_id) ?? "Circle member";
+          const acceptedCount = billParticipants.filter(
+            ({ auth_status }) => auth_status === "authenticated",
+          ).length;
+          const hasDispute = billParticipants.some(
+            ({ auth_status }) => auth_status === "disputed",
+          );
+          const viewerStatus = viewerAllocation
+            ? {
+                authenticated: "Accepted & locked",
+                disputed: "You disputed",
+                pending: "Needs your review",
+              }[viewerAllocation.auth_status]
+            : hasDispute
+              ? "Dispute needs attention"
+              : `${acceptedCount}/${billParticipants.length} accepted`;
 
           return (
             <Link
@@ -96,7 +111,7 @@ export default async function BillsPage() {
                     {categoryById.get(bill.category_id) ?? "Bill"}
                   </span>
                   <span className="rounded-full bg-[#f1f2f3] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#70737a]">
-                    {bill.status}
+                    {viewerStatus}
                   </span>
                 </div>
                 <h2 className="mt-3 truncate text-xl font-semibold tracking-[-0.035em]">{bill.description}</h2>
@@ -109,7 +124,7 @@ export default async function BillsPage() {
                 <div className="text-left sm:text-right">
                   <p className="text-xs font-medium text-[#92959d]">{viewerAllocation ? "You owe" : "Bill total"}</p>
                   <p className="mt-1 text-xl font-semibold tracking-[-0.035em]">{formatInr(viewerAllocation?.owed_amount ?? bill.total_amount)}</p>
-                  <p className="mt-1 text-xs text-[#92959d]">{billParticipants.length} participant{billParticipants.length === 1 ? "" : "s"}</p>
+                  <p className="mt-1 text-xs text-[#92959d]">{acceptedCount} of {billParticipants.length} locked</p>
                 </div>
                 <ArrowRight className="text-[#a6a8ae] group-hover:translate-x-1 group-hover:text-[#202124]" size={19} aria-hidden="true" />
               </div>
