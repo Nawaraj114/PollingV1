@@ -4,15 +4,15 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 1 — Auth & Access
+Phase 2 — Billing Core (preview branch)
 
-- Public registration disabled; only existing, administrator-created members can sign in
-- Cookie-based Supabase SSR authentication
-- Migration-managed `profiles` table with group-read/self-update RLS
-- Private `avatars` Storage bucket with member-read/owner-write RLS
-- Account settings and authenticated member directory
-- Responsive application shell with Bills and Polls placeholders
-- GitHub Actions checks for linting, types, and production builds
+- Deterministic integer-paisa split calculator with 25 unit tests
+- Automatic remainder splitting, exact allocations, and category breakdowns
+- Atomic server-validated bill creation through a database function
+- Migration-managed billing tables, seeded categories, and default-deny RLS
+- My Bills list and participant-readable allocation details
+- Phase 1 invite-only authentication, private avatars, and account controls remain active
+- GitHub Actions checks for linting, tests, types, and production builds
 
 Do not use the application for real financial records until the billing locking and audit phases are complete.
 
@@ -99,11 +99,12 @@ Confirm that both exist in Preview and Production environments. Preview deployme
 
 ```bash
 npm run lint
+npm test
 npm run typecheck
 npm run build
 ```
 
-Or run all three:
+Or run all four:
 
 ```bash
 npm run check
