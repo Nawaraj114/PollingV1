@@ -13,6 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -62,6 +63,13 @@ export default async function BillDetailPage({
   const { id } = await params;
   const viewer = await requireViewer();
   const supabase = await createClient();
+  const requestHeaders = await headers();
+  const requestHost = (
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? ""
+  )
+    .split(",")[0]
+    .trim()
+    .replace(/:\d+$/u, "");
   const { data: bill, error } = await supabase
     .from("bills")
     .select("biller_id, category_id, created_at, deleted_at, deleted_by, description, id, incurred_on, status, total_amount")
@@ -72,7 +80,12 @@ export default async function BillDetailPage({
     notFound();
   }
 
-  const [{ data: categories }, { data: profiles }, { data: participants }] = await Promise.all([
+  const [
+    { data: categories },
+    { data: profiles },
+    { data: participants },
+    { data: currentSitePasskey },
+  ] = await Promise.all([
     supabase.from("bill_categories").select("id, name"),
     supabase.from("profiles").select("avatar_path, full_name, id"),
     supabase
@@ -80,7 +93,15 @@ export default async function BillDetailPage({
       .select("auth_method, auth_status, authenticated_at, confirmed_at, dispute_note, disputed_at, id, owed_amount, paid_at, participant_id, payment_status, split_method")
       .eq("bill_id", bill.id)
       .order("created_at"),
+    supabase
+      .from("webauthn_credentials")
+      .select("id")
+      .eq("user_id", viewer.id)
+      .eq("rp_id", requestHost)
+      .limit(1)
+      .maybeSingle(),
   ]);
+  const hasPasskey = Boolean(currentSitePasskey);
   const participantIds = (participants ?? []).map(({ id: participantId }) => participantId);
   const [{ data: lineItems }, { data: history }] = participantIds.length
     ? await Promise.all([
@@ -245,6 +266,7 @@ export default async function BillDetailPage({
         <ParticipantAllocationActions
           authenticatedAt={viewerParticipant.authenticated_at}
           disputeNote={viewerParticipant.dispute_note}
+          hasPasskey={hasPasskey}
           participantId={viewerParticipant.id}
           status={viewerParticipant.auth_status}
         />
@@ -268,7 +290,7 @@ export default async function BillDetailPage({
             <div>
               <h2 className="font-semibold tracking-[-0.02em]">Confirm received payments</h2>
               <p className="mt-1 text-sm leading-6 text-[#74777f]">
-                Confirm only after the money reaches you. Each confirmation requires your password and is permanently audited.
+                Confirm only after the money reaches you. Use your passkey or password; every confirmation is permanently audited.
               </p>
             </div>
           </div>
@@ -276,6 +298,7 @@ export default async function BillDetailPage({
             {markedPayments.map((participant) => (
               <ConfirmReceiptForm
                 amount={participant.owed_amount}
+                hasPasskey={hasPasskey}
                 key={participant.id}
                 name={profilesById.get(participant.participant_id)?.full_name ?? "Circle member"}
                 participantId={participant.id}
@@ -337,7 +360,7 @@ export default async function BillDetailPage({
                 : profilesById.get(event.actor_id)?.full_name ?? "Circle member";
             const eventDetails = {
               amount_updated: `${actorName} corrected ${participantName}'s allocation to ${formatInr(Number(eventValue(event.event_data, "owed_amount") ?? participant?.owed_amount ?? 0))}.`,
-              authenticated: `${participantName} accepted and database-locked the allocation with password authentication.`,
+              authenticated: `${participantName} accepted and database-locked the allocation with ${eventValue(event.event_data, "auth_method") === "webauthn" ? "passkey" : "password"} authentication.`,
               bill_deleted: `${actorName} deleted the bill. The record became read-only and moved out of active bills.`,
               bill_settled: `${actorName} confirmed the final payment. The database automatically settled the bill.`,
               breakdown_updated: `${actorName} updated ${participantName}'s category breakdown.`,

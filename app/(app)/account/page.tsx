@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { AccountForm } from "@/components/account-form";
 import { MemberAvatar } from "@/components/member-avatar";
+import { PasskeyManager } from "@/components/passkey-manager";
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,6 +16,11 @@ export default async function AccountPage() {
     .from("profiles")
     .select("avatar_path, full_name, id")
     .order("full_name");
+  const { data: passkeys } = await supabase
+    .from("webauthn_credentials")
+    .select("backed_up, created_at, device_label, id, last_used_at, rp_id")
+    .eq("user_id", viewer.id)
+    .order("created_at", { ascending: false });
   const paths = (profiles ?? [])
     .map((profile) => profile.avatar_path)
     .filter((path): path is string => Boolean(path));
@@ -102,6 +108,8 @@ export default async function AccountPage() {
           )}
         </section>
       </div>
+
+      <PasskeyManager passkeys={passkeys ?? []} />
     </main>
   );
 }

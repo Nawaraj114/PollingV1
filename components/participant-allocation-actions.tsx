@@ -14,6 +14,7 @@ import {
   disputeAllocation,
   type BillActionState,
 } from "@/lib/bills/state-actions";
+import { PasskeyStepUpButton } from "@/components/passkey-step-up-button";
 
 const initialState: BillActionState = {};
 
@@ -37,11 +38,13 @@ function ActionMessage({ state }: { state: BillActionState }) {
 export function ParticipantAllocationActions({
   authenticatedAt,
   disputeNote,
+  hasPasskey,
   participantId,
   status,
 }: {
   authenticatedAt: string | null;
   disputeNote: string | null;
+  hasPasskey: boolean;
   participantId: string;
   status: "authenticated" | "disputed" | "pending";
 }) {
@@ -99,17 +102,28 @@ export function ParticipantAllocationActions({
         <div>
           <h2 className="font-semibold tracking-[-0.02em]">Review your allocation</h2>
           <p className="mt-1 text-sm leading-6 text-[#74777f]">
-            Accepting requires your account password. Once accepted, neither the
-            biller nor a direct API call can alter this amount.
+            Approve with this device&apos;s passkey or use your password as a fallback.
+            Once accepted, neither the biller nor a direct API call can alter this amount.
           </p>
         </div>
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <form action={acceptAction} className="rounded-2xl border border-[#dceafb] bg-[#f7fbff] p-4" noValidate>
+        <div className="rounded-2xl border border-[#dceafb] bg-[#f7fbff] p-4">
+          {hasPasskey && (
+            <div className="mb-4 border-b border-[#dceafb] pb-4">
+              <p className="mb-3 text-sm font-semibold">Approve with this device</p>
+              <PasskeyStepUpButton
+                action="accept_allocation"
+                label="Authenticate & accept"
+                targetId={participantId}
+              />
+            </div>
+          )}
+          <form action={acceptAction} noValidate>
           <input name="participantId" type="hidden" value={participantId} />
           <label className="block text-sm font-semibold" htmlFor={`password-${participantId}`}>
-            Re-enter your password
+            {hasPasskey ? "Password fallback" : "Re-enter your password"}
           </label>
           <input
             autoComplete="current-password"
@@ -127,7 +141,8 @@ export function ParticipantAllocationActions({
             {accepting ? "Verifying" : "Authenticate & accept"}
           </button>
           <ActionMessage state={acceptState} />
-        </form>
+          </form>
+        </div>
 
         <form action={disputeAction} className="rounded-2xl border border-[#eee0c0] bg-[#fffaf0] p-4" noValidate>
           <input name="participantId" type="hidden" value={participantId} />

@@ -15,6 +15,7 @@ import {
   type BillActionState,
 } from "@/lib/bills/state-actions";
 import { formatInr } from "@/lib/bills/money";
+import { PasskeyStepUpButton } from "@/components/passkey-step-up-button";
 
 const initialState: BillActionState = {};
 
@@ -113,18 +114,19 @@ export function ParticipantPaymentAction({
 
 export function ConfirmReceiptForm({
   amount,
+  hasPasskey,
   name,
   participantId,
 }: {
   amount: number;
+  hasPasskey: boolean;
   name: string;
   participantId: string;
 }) {
   const [state, action, pending] = useActionState(confirmPaymentReceipt, initialState);
 
   return (
-    <form action={action} className="rounded-2xl border border-[#dceafb] bg-[#f7fbff] p-4" noValidate>
-      <input name="participantId" type="hidden" value={participantId} />
+    <div className="rounded-2xl border border-[#dceafb] bg-[#f7fbff] p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-semibold">{name}</p>
@@ -132,25 +134,37 @@ export function ConfirmReceiptForm({
         </div>
         <ShieldCheck className="shrink-0 text-[#1473e6]" size={19} aria-hidden="true" />
       </div>
-      <label className="mt-4 block text-sm font-semibold" htmlFor={`confirm-password-${participantId}`}>
-        Re-enter your password to confirm receipt
-      </label>
-      <input
-        autoComplete="current-password"
-        className="field mt-2 h-11"
-        id={`confirm-password-${participantId}`}
-        name="password"
-        required
-        type="password"
-      />
-      {state.errors?.password?.[0] && (
-        <p className="mt-1.5 text-sm text-[#c43f32]" role="alert">{state.errors.password[0]}</p>
+      {hasPasskey && (
+        <div className="mt-4">
+          <PasskeyStepUpButton
+            action="confirm_receipt"
+            label="Confirm receipt with passkey"
+            targetId={participantId}
+          />
+        </div>
       )}
-      <button className="button button-primary mt-3 w-full" disabled={pending} type="submit">
-        {pending ? <LoaderCircle className="animate-spin" size={17} aria-hidden="true" /> : <BadgeCheck size={17} aria-hidden="true" />}
-        {pending ? "Confirming" : "Confirm receipt"}
-      </button>
-      <ActionMessage state={state} />
-    </form>
+      <form action={action} className={hasPasskey ? "mt-4 border-t border-[#dceafb] pt-4" : "mt-4"} noValidate>
+        <input name="participantId" type="hidden" value={participantId} />
+        <label className="block text-sm font-semibold" htmlFor={`confirm-password-${participantId}`}>
+          {hasPasskey ? "Password fallback" : "Re-enter your password to confirm receipt"}
+        </label>
+        <input
+          autoComplete="current-password"
+          className="field mt-2 h-11"
+          id={`confirm-password-${participantId}`}
+          name="password"
+          required
+          type="password"
+        />
+        {state.errors?.password?.[0] && (
+          <p className="mt-1.5 text-sm text-[#c43f32]" role="alert">{state.errors.password[0]}</p>
+        )}
+        <button className={`button mt-3 w-full ${hasPasskey ? "button-light" : "button-primary"}`} disabled={pending} type="submit">
+          {pending ? <LoaderCircle className="animate-spin" size={17} aria-hidden="true" /> : <BadgeCheck size={17} aria-hidden="true" />}
+          {pending ? "Confirming" : "Confirm receipt with password"}
+        </button>
+        <ActionMessage state={state} />
+      </form>
+    </div>
   );
 }
