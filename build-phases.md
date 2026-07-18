@@ -43,13 +43,13 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 2 — Billing Core (no locking yet)
 **Goal:** the split-calculation logic works and is trustworthy, before you add any authentication layer on top.
 
-- [ ] Migrations: `bill_categories` (seed Food, Games, Beverages, Others), `bills`, `bill_participants`, `bill_line_items`
-- [ ] RLS: only the biller can insert/update a bill and its participants for now; participants can read bills they're part of
-- [ ] "Create Bill" screen: total amount, date, description, category picker (+ "add custom category"), participant multi-select
-- [ ] Per-participant input: optional exact amount, optional category breakdown (line items) — leave blank to auto-split
-- [ ] Server-side (not just client-side) calculation of the auto-split remainder, using a single shared function in `/lib/validations/billSplit.ts` so client preview and server truth never disagree
-- [ ] **Write unit tests for the split function first** — this is the single most important piece of logic in the app; test: all-blank (even split), mixed blank/explicit, single explicit rest to one blank person, rounding edge cases (e.g. ₹100 / 3 people)
-- [ ] "My Bills" list + bill detail page showing each participant's owed amount and category breakdown
+- [x] Migrations: `bill_categories` (seed Food, Games, Beverages, Others), `bills`, `bill_participants`, `bill_line_items`
+- [x] RLS: only the biller can insert/update a bill and its participants for now; participants can read bills they're part of
+- [x] "Create Bill" screen: total amount, date, description, category picker (+ "add custom category"), participant multi-select
+- [x] Per-participant input: optional exact amount, optional category breakdown (line items) — leave blank to auto-split
+- [x] Server-side (not just client-side) calculation of the auto-split remainder, using a single shared function in `/lib/validations/billSplit.ts` so client preview and server truth never disagree
+- [x] **Write unit tests for the split function first** — this is the single most important piece of logic in the app; test: all-blank (even split), mixed blank/explicit, single explicit rest to one blank person, rounding edge cases (e.g. ₹100 / 3 people)
+- [x] "My Bills" list + bill detail page showing each participant's owed amount and category breakdown
 
 **Definition of Done:** you can create a real bill with a friend, split it manually or automatically, and the numbers are provably correct (tests passing + manually double-checked).
 
