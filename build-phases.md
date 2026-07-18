@@ -86,11 +86,11 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 5 — Polling Module
 **Goal:** now that billing (the hard part) is solid, polling is comparatively simple and self-contained.
 
-- [ ] Migrations: `polls`, `poll_options`, `poll_votes`
-- [ ] RLS: any authenticated user can create a poll and vote once
-- [ ] Create-poll screen: question, options, single/multiple choice toggle, optional expiry
-- [ ] Voting UI + live results using Supabase Realtime subscription on `poll_votes`
-- [ ] Auto-close on `expires_at` (simple client-side check is fine at this scale, no cron needed)
+- [x] Migrations: `polls`, `poll_options`, `poll_votes`
+- [x] RLS: any authenticated user can create a poll and vote once
+- [x] Create-poll screen: question, options, single/multiple choice toggle, optional expiry
+- [x] Voting UI + live results using Supabase Realtime subscription on `poll_votes`
+- [x] Auto-close on `expires_at` (simple client-side check is fine at this scale, no cron needed)
 
 **Definition of Done:** a poll created by one user is votable by others in real time, and results update live without a page refresh.
 
