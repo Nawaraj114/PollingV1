@@ -10,6 +10,10 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import {
+  BalancePaymentPanel,
+  type DueAllocation,
+} from "@/components/balance-payment-panel";
 import { BalanceRealtimeRefresh } from "@/components/balance-realtime-refresh";
 import { MemberAvatar } from "@/components/member-avatar";
 import { requireViewer } from "@/lib/auth/session";
@@ -28,6 +32,14 @@ type BalanceSnapshot = {
     creditor_id: string;
     debtor_id: string;
   }>;
+  viewer_due: Array<{
+    amount_minor: number;
+    bill_id: string;
+    biller_id: string;
+    description: string;
+    incurred_on: string;
+    participant_id: string;
+  }>;
   viewer_awaiting: {
     receivable_minor: number;
     sent_minor: number;
@@ -43,12 +55,14 @@ function parseSnapshot(value: unknown): BalanceSnapshot {
   if (!value || typeof value !== "object") {
     return {
       obligations: [],
+      viewer_due: [],
       viewer_awaiting: { receivable_minor: 0, sent_minor: 0 },
     };
   }
 
   const raw = value as {
     obligations?: unknown;
+    viewer_due?: unknown;
     viewer_awaiting?: unknown;
   };
   const awaiting =
@@ -70,9 +84,44 @@ function parseSnapshot(value: unknown): BalanceSnapshot {
           : [];
       })
     : [];
+  const viewerDue = Array.isArray(raw.viewer_due)
+    ? raw.viewer_due.flatMap((entry) => {
+        if (!entry || typeof entry !== "object") return [];
+        const item = entry as Record<string, unknown>;
+        const amountMinor = parseMinor(item.amount_minor);
+        const billId = typeof item.bill_id === "string" ? item.bill_id : "";
+        const billerId =
+          typeof item.biller_id === "string" ? item.biller_id : "";
+        const description =
+          typeof item.description === "string" ? item.description : "";
+        const incurredOn =
+          typeof item.incurred_on === "string" ? item.incurred_on : "";
+        const participantId =
+          typeof item.participant_id === "string" ? item.participant_id : "";
+
+        return amountMinor > 0 &&
+          billId &&
+          billerId &&
+          description &&
+          incurredOn &&
+          participantId
+          ? [
+              {
+                amount_minor: amountMinor,
+                bill_id: billId,
+                biller_id: billerId,
+                description,
+                incurred_on: incurredOn,
+                participant_id: participantId,
+              },
+            ]
+          : [];
+      })
+    : [];
 
   return {
     obligations,
+    viewer_due: viewerDue,
     viewer_awaiting: {
       receivable_minor: parseMinor(awaiting.receivable_minor),
       sent_minor: parseMinor(awaiting.sent_minor),
@@ -107,6 +156,21 @@ export default async function BalancesPage() {
   );
   const nameFor = (memberId: string) =>
     profileById.get(memberId) ?? "Circle member";
+  const viewerDue: DueAllocation[] = snapshot.viewer_due.map(
+    ({
+      amount_minor,
+      biller_id,
+      description,
+      incurred_on,
+      participant_id,
+    }) => ({
+      amountMinor: amount_minor,
+      billerName: nameFor(biller_id),
+      description,
+      id: participant_id,
+      incurredOn: incurred_on,
+    }),
+  );
   const viewerBalance =
     memberBalances.find(({ memberId }) => memberId === viewer.id)?.netMinor ?? 0;
   const totalToSettle = transfers.reduce(
@@ -229,6 +293,13 @@ export default async function BalancesPage() {
             </section>
           )}
 
+          {viewerDue.length > 0 && (
+            <BalancePaymentPanel
+              allocations={viewerDue}
+              key={viewerDue.map(({ id }) => id).join("-")}
+            />
+          )}
+
           <section className="mt-10 grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
             <article className="rounded-[2rem] border border-black/7 bg-white p-5 sm:p-7">
               <div className="flex items-start justify-between gap-5">
@@ -297,9 +368,10 @@ export default async function BalancesPage() {
               <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#f1f3f5] px-4 py-3 text-xs leading-5 text-[#686b73]">
                 <Info className="mt-0.5 shrink-0" size={16} aria-hidden="true" />
                 <p>
-                  This plan summarizes the circle; it does not change any bill.
-                  Coordinate before transferring, then record and confirm the
-                  underlying payments in Bills so the audit history stays exact.
+                  This plan summarizes the circle and can combine several bills.
+                  Use the quick-payment controls above for your original
+                  allocations so each bill&apos;s confirmation and audit history
+                  stay exact.
                 </p>
               </div>
             </article>

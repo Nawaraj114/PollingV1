@@ -494,6 +494,10 @@ export type Database = {
         Args: { p_participant_id: string };
         Returns: undefined;
       };
+      mark_bill_participants_paid: {
+        Args: { p_participant_ids: string[] };
+        Returns: number;
+      };
       resubmit_bill_allocations: {
         Args: { p_allocations: Json; p_bill_id: string };
         Returns: undefined;

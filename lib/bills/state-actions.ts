@@ -34,6 +34,7 @@ function errorState(message: string): BillActionState {
 function refreshBill(billId: string) {
   revalidatePath(`/bills/${billId}`);
   revalidatePath("/bills");
+  revalidatePath("/balances");
   revalidatePath("/dashboard");
 }
 

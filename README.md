@@ -7,6 +7,8 @@ A private Next.js and Supabase application for a group of friends to split bills
 Phase 8 — Net Balances (preview branch; Phase 6 chat remains deferred)
 
 - Circle-wide net balance and deterministic debt-simplification view
+- Selective or one-click batch payment marking directly from Balances
+- Atomic batch updates with per-bill timestamps and audit events
 - Accepted and unpaid allocations only, calculated in exact integer paisa
 - Payment-sent amounts excluded from suggestions while awaiting confirmation
 - Read-only settlement suggestions with existing bill audit trails kept authoritative
