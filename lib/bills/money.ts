@@ -8,3 +8,6 @@ export function formatInr(amount: number) {
   return inrFormatter.format(amount);
 }
 
+export function formatMinorInr(amountMinor: number) {
+  return formatInr(amountMinor / 100);
+}

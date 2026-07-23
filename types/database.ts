@@ -422,6 +422,10 @@ export type Database = {
       };
     };
     Functions: {
+      get_circle_balance_snapshot: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       get_bill_feed: {
         Args: Record<PropertyKey, never>;
         Returns: Json;
@@ -489,6 +493,10 @@ export type Database = {
       mark_bill_participant_paid: {
         Args: { p_participant_id: string };
         Returns: undefined;
+      };
+      mark_bill_participants_paid: {
+        Args: { p_participant_ids: string[] };
+        Returns: number;
       };
       resubmit_bill_allocations: {
         Args: { p_allocations: Json; p_bill_id: string };

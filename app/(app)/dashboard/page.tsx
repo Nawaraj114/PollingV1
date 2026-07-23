@@ -2,6 +2,7 @@ import {
   ArrowUpRight,
   Check,
   ReceiptText,
+  Scale,
   Sparkles,
   Vote,
 } from "lucide-react";
@@ -14,6 +15,14 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Home" };
 
 const modules = [
+  {
+    accent: "bg-[#26856d]",
+    description: "Net accepted bills into a clear, circle-wide settlement plan.",
+    href: "/balances",
+    icon: Scale,
+    label: "Balances",
+    phase: "Phase 8 active",
+  },
   {
     accent: "bg-[#1473e6]",
     description: "Create transparent splits and follow every confirmation.",
@@ -75,7 +84,7 @@ export default async function DashboardPage() {
             Good to see you, {firstName}.
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-8 text-[#74777f]">
-            Create a circle poll, vote once, and watch authenticated results update live across browsers.
+            Split expenses, see the circle&apos;s net position, and make decisions together.
           </p>
         </div>
 
@@ -99,7 +108,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <section className="mt-10 grid gap-5 lg:grid-cols-2" aria-label="FriendCircle modules">
+      <section className="mt-10 grid gap-5 lg:grid-cols-3" aria-label="FriendCircle modules">
         {modules.map(({ accent, description, href, icon: Icon, label, phase }) => (
           <Link
             className="group rounded-[1.7rem] border border-black/7 bg-white p-6 shadow-[0_10px_35px_rgba(34,37,43,0.04)] hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(34,37,43,0.09)]"
@@ -125,12 +134,12 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Build progress</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Phase 5 · Live Polling</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Phase 8 · Net Balances</h2>
             </div>
             <span className="rounded-full bg-[#163d68] px-3 py-1.5 text-xs font-semibold text-[#75baff]">Phase preview</span>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {["Single or multiple choice", "One immutable ballot", "Realtime live results"].map((item) => (
+            {["Accepted bills only", "Exact paisa arithmetic", "Realtime balance updates"].map((item) => (
               <div className="flex items-center gap-2 rounded-2xl border border-white/9 bg-white/5 px-4 py-3 text-sm" key={item}>
                 <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#1473e6]">
                   <Check size={12} strokeWidth={3} aria-hidden="true" />

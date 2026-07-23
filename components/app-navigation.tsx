@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LogOut,
   ReceiptText,
+  Scale,
   UserRound,
   Vote,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { MemberAvatar } from "./member-avatar";
 const navigation = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/bills", icon: ReceiptText, label: "Bills" },
+  { href: "/balances", icon: Scale, label: "Balances" },
   { href: "/polls", icon: Vote, label: "Polls" },
   { href: "/account", icon: UserRound, label: "Account" },
 ];
@@ -74,7 +76,7 @@ export function AppNavigation({
           return (
             <Link
               aria-current={active ? "page" : undefined}
-              className={`flex min-w-15 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-[10px] font-semibold ${active ? "bg-[#1473e6] text-white" : "text-white/55"}`}
+              className={`flex min-w-13 flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-semibold ${active ? "bg-[#1473e6] text-white" : "text-white/55"}`}
               href={href}
               key={href}
               prefetch
