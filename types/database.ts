@@ -467,6 +467,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+      get_bill_history_export: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       authenticate_bill_participant: {
         Args: { p_participant_id: string };
         Returns: undefined;

@@ -126,7 +126,7 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 - [x] Net balance / debt-simplification view across all bills
 - [x] Receipt photo attachment via Supabase Storage
 - [x] Notifications (email via a free-tier provider, or in-app badges) for "a bill needs your response"
-- [ ] CSV export of bill history
+- [x] CSV export of bill history
 - [ ] PWA install support
 - [ ] Dark mode
 

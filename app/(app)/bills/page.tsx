@@ -1,4 +1,4 @@
-import { CirclePlus, ReceiptText } from "lucide-react";
+import { CirclePlus, Download, ReceiptText } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -179,9 +179,18 @@ export default async function BillsPage({
             Review, accept, and record payments without leaving this page.
           </p>
         </div>
-        <Link className="button button-primary h-12 px-5" href="/bills/new" prefetch>
-          <CirclePlus size={18} aria-hidden="true" /> Create bill
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <a
+            className="button button-light h-12 px-5"
+            download
+            href="/api/bills/export"
+          >
+            <Download size={18} aria-hidden="true" /> Export history
+          </a>
+          <Link className="button button-primary h-12 px-5" href="/bills/new" prefetch>
+            <CirclePlus size={18} aria-hidden="true" /> Create bill
+          </Link>
+        </div>
       </section>
 
       {error && (
