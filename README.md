@@ -4,8 +4,12 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 8 — Net Balances (preview branch; Phase 6 chat remains deferred)
+Phase 8 — Private Receipt Attachments (preview branch; Phase 6 chat remains deferred)
 
+- Private receipt photos stored in a restricted Supabase Storage bucket
+- Biller-only upload and removal with bill-member-only signed viewing links
+- Optional receipt capture during bill creation or later from bill details
+- Mobile camera capture plus JPG, PNG, and WebP uploads up to 5 MB
 - Circle-wide net balance and deterministic debt-simplification view
 - Selective or one-click batch payment marking directly from Balances
 - Atomic batch updates with per-bill timestamps and audit events

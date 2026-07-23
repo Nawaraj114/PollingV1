@@ -108,6 +108,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      bill_receipts: {
+        Row: {
+          bill_id: string;
+          created_at: string;
+          file_size: number;
+          id: string;
+          mime_type: "image/jpeg" | "image/png" | "image/webp";
+          original_name: string;
+          storage_path: string;
+          uploaded_by: string;
+        };
+        Insert: {
+          bill_id: string;
+          created_at?: string;
+          file_size: number;
+          id?: string;
+          mime_type: "image/jpeg" | "image/png" | "image/webp";
+          original_name: string;
+          storage_path: string;
+          uploaded_by: string;
+        };
+        Update: {
+          bill_id?: string;
+          created_at?: string;
+          file_size?: number;
+          id?: string;
+          mime_type?: "image/jpeg" | "image/png" | "image/webp";
+          original_name?: string;
+          storage_path?: string;
+          uploaded_by?: string;
+        };
+        Relationships: [];
+      };
       bill_status_history: {
         Row: {
           actor_id: string;
@@ -444,6 +477,14 @@ export type Database = {
       };
       can_read_bill_participant: {
         Args: { target_participant_id: string };
+        Returns: boolean;
+      };
+      can_manage_bill_receipt: {
+        Args: { target_bill_id: string };
+        Returns: boolean;
+      };
+      can_manage_bill_receipt_path: {
+        Args: { target_path: string };
         Returns: boolean;
       };
       cast_poll_vote: {

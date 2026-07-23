@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { requireViewerId } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -16,9 +15,10 @@ import type { Json } from "@/types/database";
 import { createBillSchema, participantFormSchema } from "./schemas";
 
 export type CreateBillState = {
+  billId?: string;
   errors?: Record<string, string[]>;
   message?: string;
-  status?: "error";
+  status?: "error" | "success";
 };
 
 function errorState(message: string): CreateBillState {
@@ -131,7 +131,7 @@ export async function createBill(
 
     revalidatePath("/bills");
     revalidatePath("/dashboard");
-    redirect(`/bills?bill=${encodeURIComponent(billId)}`);
+    return { billId, status: "success" };
   } catch (error) {
     if (error instanceof BillSplitError) {
       return errorState(error.message);

@@ -2,6 +2,7 @@
 
 import {
   Calculator,
+  Camera,
   ChevronDown,
   CirclePlus,
   LoaderCircle,
@@ -9,13 +10,25 @@ import {
   ReceiptText,
   Users,
 } from "lucide-react";
-import { useActionState, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   createBill,
   type CreateBillState,
 } from "@/lib/bills/actions";
 import { formatInr } from "@/lib/bills/money";
+import {
+  attachBillReceipt,
+  receiptAccept,
+  validateReceiptFile,
+} from "@/lib/bills/receipts";
 import {
   BillSplitError,
   calculateBillSplit,
@@ -56,15 +69,22 @@ export function CreateBillForm({
   categories,
   defaultDate,
   members,
+  viewerId,
 }: {
   categories: Category[];
   defaultDate: string;
   members: Member[];
+  viewerId: string;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(createBill, initialState);
   const [categoryChoice, setCategoryChoice] = useState(categories[0]?.id ?? "");
   const [drafts, setDrafts] = useState<Record<string, ParticipantDraft>>({});
+  const [receiptError, setReceiptError] = useState<string | null>(null);
   const [totalAmount, setTotalAmount] = useState("");
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const handledBillIdRef = useRef<string | null>(null);
+  const receiptInputRef = useRef<HTMLInputElement>(null);
 
   const selectedMembers = useMemo(
     () => members.filter(({ id }) => Boolean(drafts[id])),
@@ -122,6 +142,43 @@ export function CreateBillForm({
     }),
   );
 
+  useEffect(() => {
+    if (
+      state.status !== "success" ||
+      !state.billId ||
+      handledBillIdRef.current === state.billId
+    ) {
+      return;
+    }
+
+    handledBillIdRef.current = state.billId;
+    const billId = state.billId;
+
+    void (async () => {
+      const receipt = receiptInputRef.current?.files?.[0];
+
+      if (receipt) {
+        setUploadingReceipt(true);
+        const uploadError = await attachBillReceipt({
+          billId,
+          file: receipt,
+          viewerId,
+        });
+
+        if (uploadError) {
+          setReceiptError(
+            `The bill was created, but the receipt was not attached. ${uploadError}`,
+          );
+          setUploadingReceipt(false);
+          return;
+        }
+      }
+
+      router.replace(`/bills?bill=${encodeURIComponent(billId)}`);
+      router.refresh();
+    })();
+  }, [router, state.billId, state.status, viewerId]);
+
   function toggleMember(memberId: string) {
     setDrafts((current) => {
       if (current[memberId]) {
@@ -158,7 +215,20 @@ export function CreateBillForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6" noValidate>
+    <form
+      action={formAction}
+      className="space-y-6"
+      noValidate
+      onSubmit={(event) => {
+        const receipt = receiptInputRef.current?.files?.[0];
+        const validationError = receipt
+          ? validateReceiptFile(receipt)
+          : null;
+
+        setReceiptError(validationError);
+        if (validationError) event.preventDefault();
+      }}
+    >
       <input
         name="categoryId"
         type="hidden"
@@ -251,6 +321,47 @@ export function CreateBillForm({
               <p className="mt-1.5 text-sm text-[#c43f32]" role="alert">{state.errors.description[0]}</p>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-[1.7rem] border border-black/7 bg-white p-5 shadow-[0_10px_35px_rgba(34,37,43,0.04)] sm:p-7">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#e5f1ff] text-[#1473e6]">
+            <Camera size={19} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-semibold tracking-[-0.02em]">
+                Receipt photo
+              </h2>
+              <span className="rounded-full bg-[#f1f2f3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#777a82]">
+                Optional
+              </span>
+            </div>
+            <p className="text-sm text-[#858890]">
+              Attach proof now, or add it later from bill details.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 rounded-2xl border border-dashed border-[#a8cfff] bg-[#f7fbff] p-4">
+          <input
+            accept={receiptAccept}
+            capture="environment"
+            className="block w-full text-sm text-[#6f727a] file:mr-4 file:rounded-full file:border-0 file:bg-[#edf5ff] file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-[#125cad] hover:file:bg-[#e1efff]"
+            disabled={pending || uploadingReceipt || Boolean(state.billId)}
+            onChange={(event) => {
+              const receipt = event.target.files?.[0];
+              setReceiptError(
+                receipt ? validateReceiptFile(receipt) : null,
+              );
+            }}
+            ref={receiptInputRef}
+            type="file"
+          />
+          <p className="mt-2 text-xs leading-5 text-[#8a8f97]">
+            JPG, PNG, or WebP. Maximum 5 MB. Only members of this bill can
+            view it.
+          </p>
         </div>
       </section>
 
@@ -405,9 +516,23 @@ export function CreateBillForm({
         </section>
       )}
 
-      {(preview.error || state.message) && (
+      {(preview.error || state.message || receiptError) && (
         <div className="rounded-2xl border border-[#f1c5bf] bg-[#fff3f1] px-4 py-3 text-sm leading-6 text-[#9e342a]" role="alert">
-          {state.message ?? preview.error}
+          {receiptError ?? state.message ?? preview.error}
+          {state.billId && receiptError && (
+            <button
+              className="button button-light mt-3 block"
+              onClick={() => {
+                router.replace(
+                  `/bills?bill=${encodeURIComponent(state.billId!)}`,
+                );
+                router.refresh();
+              }}
+              type="button"
+            >
+              Open created bill and retry
+            </button>
+          )}
         </div>
       )}
 
@@ -417,11 +542,30 @@ export function CreateBillForm({
         </p>
         <button
           className="button button-primary h-12 px-6"
-          disabled={pending || !preview.allocations}
+          disabled={
+            pending ||
+            uploadingReceipt ||
+            Boolean(state.billId) ||
+            !preview.allocations
+          }
           type="submit"
         >
-          {pending ? <LoaderCircle className="animate-spin" size={18} aria-hidden="true" /> : <ReceiptText size={18} aria-hidden="true" />}
-          {pending ? "Creating bill" : "Create bill"}
+          {pending || uploadingReceipt ? (
+            <LoaderCircle
+              className="animate-spin"
+              size={18}
+              aria-hidden="true"
+            />
+          ) : (
+            <ReceiptText size={18} aria-hidden="true" />
+          )}
+          {pending
+            ? "Creating bill"
+            : uploadingReceipt
+              ? "Attaching receipt"
+              : state.billId
+                ? "Bill created"
+                : "Create bill"}
         </button>
       </div>
     </form>
