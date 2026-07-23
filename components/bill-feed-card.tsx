@@ -19,6 +19,7 @@ import {
   ConfirmReceiptForm,
   ParticipantPaymentAction,
 } from "@/components/payment-actions";
+import { BillReceiptPanel } from "@/components/bill-receipt-panel";
 import { formatInr } from "@/lib/bills/money";
 import type { Json } from "@/types/database";
 
@@ -74,6 +75,15 @@ type FeedBill = {
   totalAmount: number;
 };
 
+type FeedReceipt = {
+  createdAt: string;
+  id: string;
+  originalName: string;
+  signedUrl: string | null;
+  storagePath: string;
+  uploaderName: string;
+};
+
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",
@@ -113,6 +123,7 @@ export function BillFeedCard({
   history,
   initiallyExpanded = false,
   participants,
+  receipt,
   viewerId,
 }: {
   bill: FeedBill;
@@ -120,6 +131,7 @@ export function BillFeedCard({
   history: FeedHistoryEvent[];
   initiallyExpanded?: boolean;
   participants: FeedParticipant[];
+  receipt: FeedReceipt | null;
   viewerId: string;
 }) {
   const [expanded, setExpanded] = useState(initiallyExpanded);
@@ -333,6 +345,13 @@ export function BillFeedCard({
               </div>
             ))}
           </div>
+
+          <BillReceiptPanel
+            billId={bill.id}
+            canManage={isBiller && !isDeleted && bill.status === "open"}
+            receipt={receipt}
+            viewerId={viewerId}
+          />
 
           {isBiller && hasDispute && !isDeleted && (
             <DisputeResolutionForm

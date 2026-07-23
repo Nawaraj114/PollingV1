@@ -19,6 +19,7 @@ type BillFeedPayload = {
   line_items: PublicTables["bill_line_items"]["Row"][];
   participants: PublicTables["bill_participants"]["Row"][];
   profiles: PublicTables["profiles"]["Row"][];
+  receipts: PublicTables["bill_receipts"]["Row"][];
 };
 
 export default async function BillsPage({
@@ -56,6 +57,7 @@ export default async function BillsPage({
     line_items: [],
     participants: [],
     profiles: [],
+    receipts: [],
   }) as unknown as BillFeedPayload;
   const bills = feed.bills;
   const categories = feed.categories;
@@ -63,6 +65,19 @@ export default async function BillsPage({
   const participants = feed.participants;
   const lineItems = feed.line_items;
   const history = feed.history;
+  const receipts = feed.receipts;
+  const receiptPaths = receipts.map(({ storage_path }) => storage_path);
+  const { data: signedReceipts } = receiptPaths.length
+    ? await supabase.storage
+        .from("bill-receipts")
+        .createSignedUrls(receiptPaths, 60 * 60)
+    : { data: [] };
+  const receiptUrlByPath = new Map(
+    (signedReceipts ?? []).map((receipt) => [
+      receipt.path,
+      receipt.signedUrl,
+    ]),
+  );
   const categoryById = new Map(
     categories.map((category) => [category.id, category.name]),
   );
@@ -80,6 +95,7 @@ export default async function BillsPage({
     const billParticipantIds = new Set(
       billParticipants.map(({ id }) => id),
     );
+    const receipt = receipts.find(({ bill_id }) => bill_id === bill.id);
 
     return (
       <BillFeedCard
@@ -129,6 +145,20 @@ export default async function BillsPage({
           paymentStatus: participant.payment_status,
           splitMethod: participant.split_method,
         }))}
+        receipt={
+          receipt
+            ? {
+                createdAt: receipt.created_at,
+                id: receipt.id,
+                originalName: receipt.original_name,
+                signedUrl:
+                  receiptUrlByPath.get(receipt.storage_path) ?? null,
+                storagePath: receipt.storage_path,
+                uploaderName:
+                  profileById.get(receipt.uploaded_by) ?? "Circle member",
+              }
+            : null
+        }
         viewerId={viewer.id}
       />
     );

@@ -10,6 +10,7 @@ const billingTables = [
   "bill_participants",
   "bill_line_items",
   "bill_status_history",
+  "bill_receipts",
 ] as const;
 
 export function BillRealtimeRefresh() {

@@ -1,20 +1,20 @@
 import type { NextConfig } from "next";
 
-function avatarRemotePatterns(): NonNullable<NextConfig["images"]>["remotePatterns"] {
+function supabaseStorageRemotePatterns(): NonNullable<
+  NextConfig["images"]
+>["remotePatterns"] {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (!supabaseUrl) return [];
 
   const url = new URL(supabaseUrl);
 
-  return [
-    {
-      hostname: url.hostname,
-      pathname: "/storage/v1/object/sign/avatars/**",
-      port: url.port,
-      protocol: url.protocol === "http:" ? "http" : "https",
-    },
-  ];
+  return ["avatars", "bill-receipts"].map((bucket) => ({
+    hostname: url.hostname,
+    pathname: `/storage/v1/object/sign/${bucket}/**`,
+    port: url.port,
+    protocol: url.protocol === "http:" ? "http" : "https",
+  }));
 }
 
 const nextConfig: NextConfig = {
@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    remotePatterns: avatarRemotePatterns(),
+    remotePatterns: supabaseStorageRemotePatterns(),
   },
   poweredByHeader: false,
   turbopack: {
