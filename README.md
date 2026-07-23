@@ -4,8 +4,13 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 7 — Passkey Step-Up Authentication (preview branch; Phase 6 chat remains deferred)
+Phase 8 — Net Balances (preview branch; Phase 6 chat remains deferred)
 
+- Circle-wide net balance and deterministic debt-simplification view
+- Accepted and unpaid allocations only, calculated in exact integer paisa
+- Payment-sent amounts excluded from suggestions while awaiting confirmation
+- Read-only settlement suggestions with existing bill audit trails kept authoritative
+- Realtime balance updates across signed-in browsers
 - Passkey registration and removal from the account screen
 - Face, fingerprint, or device-PIN approval for sensitive billing actions
 - Single-page bill cards for accepting allocations, marking payments, and confirming receipts
