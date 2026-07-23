@@ -127,7 +127,7 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 - [x] Receipt photo attachment via Supabase Storage
 - [x] Notifications (email via a free-tier provider, or in-app badges) for "a bill needs your response"
 - [x] CSV export of bill history
-- [ ] PWA install support
+- [x] PWA install support
 - [ ] Dark mode
 
 ---
