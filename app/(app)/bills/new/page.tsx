@@ -67,6 +67,7 @@ export default async function NewBillPage() {
           categories={categories ?? []}
           defaultDate={todayInNepal()}
           members={members}
+          viewerId={viewer.id}
         />
       </div>
     </main>

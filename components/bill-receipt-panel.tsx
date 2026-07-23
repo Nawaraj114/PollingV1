@@ -13,13 +13,10 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
-
-const receiptTypes = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-] as const);
-const maxReceiptBytes = 5 * 1024 * 1024;
+import {
+  attachBillReceipt,
+  receiptAccept,
+} from "@/lib/bills/receipts";
 
 type Receipt = {
   createdAt: string;
@@ -65,67 +62,20 @@ export function BillReceiptPanel({
       return;
     }
 
-    const extension = receiptTypes.get(
-      file.type as "image/jpeg" | "image/png" | "image/webp",
-    );
-
-    if (!extension) {
-      setMessage({
-        status: "error",
-        text: "Choose a JPG, PNG, or WebP receipt image.",
-      });
-      return;
-    }
-
-    if (file.size < 1 || file.size > maxReceiptBytes) {
-      setMessage({
-        status: "error",
-        text: "Receipt images must be 5 MB or smaller.",
-      });
-      return;
-    }
-
     setPending(true);
     setMessage(null);
 
-    const supabase = createClient();
-    const storagePath = `${viewerId}/${billId}/${crypto.randomUUID()}.${extension}`;
-    const { error: uploadError } = await supabase.storage
-      .from("bill-receipts")
-      .upload(storagePath, file, {
-        cacheControl: "3600",
-        contentType: file.type,
-        upsert: false,
-      });
+    const uploadError = await attachBillReceipt({
+      billId,
+      file,
+      viewerId,
+    });
 
     if (uploadError) {
       setPending(false);
       setMessage({
         status: "error",
-        text: "The receipt could not be uploaded. Try another image.",
-      });
-      return;
-    }
-
-    const originalName =
-      file.name.trim().slice(0, 120) || `receipt.${extension}`;
-    const { error: metadataError } = await supabase
-      .from("bill_receipts")
-      .insert({
-        bill_id: billId,
-        file_size: file.size,
-        mime_type: file.type as "image/jpeg" | "image/png" | "image/webp",
-        original_name: originalName,
-        storage_path: storagePath,
-        uploaded_by: viewerId,
-      });
-
-    if (metadataError) {
-      await supabase.storage.from("bill-receipts").remove([storagePath]);
-      setPending(false);
-      setMessage({
-        status: "error",
-        text: "Receipt details could not be saved. Refresh and try again.",
+        text: uploadError,
       });
       return;
     }
@@ -258,7 +208,7 @@ export function BillReceiptPanel({
             Choose receipt photo
           </label>
           <input
-            accept="image/jpeg,image/png,image/webp"
+            accept={receiptAccept}
             capture="environment"
             className="mt-3 block w-full text-sm text-[#6f727a] file:mr-4 file:rounded-full file:border-0 file:bg-[#edf5ff] file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-[#125cad] hover:file:bg-[#e1efff]"
             disabled={pending}
