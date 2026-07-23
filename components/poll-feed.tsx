@@ -10,6 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   castVote,
@@ -234,6 +235,7 @@ export function PollFeed({
   profileNames: Record<string, string>;
   viewerId: string;
 }) {
+  const router = useRouter();
   const [realtimeVotes, setRealtimeVotes] = useState<FeedVote[]>([]);
   const [closedPollIds, setClosedPollIds] = useState<string[]>([]);
   const [live, setLive] = useState(false);
@@ -263,13 +265,16 @@ export function PollFeed({
         },
       )
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") setLive(true);
+        if (status === "SUBSCRIBED") {
+          setLive(true);
+          router.refresh();
+        }
       });
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [router]);
 
   const votes = useMemo(() => {
     const merged = new Map(initialVotes.map((vote) => [vote.id, vote]));

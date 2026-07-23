@@ -231,6 +231,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      webauthn_challenges: {
+        Row: {
+          action_type: "accept_allocation" | "confirm_receipt" | null;
+          ceremony: "authentication" | "registration";
+          challenge: string;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          rp_id: string;
+          target_id: string | null;
+          used_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          action_type?: "accept_allocation" | "confirm_receipt" | null;
+          ceremony: "authentication" | "registration";
+          challenge: string;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          rp_id: string;
+          target_id?: string | null;
+          used_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          action_type?: "accept_allocation" | "confirm_receipt" | null;
+          ceremony?: "authentication" | "registration";
+          challenge?: string;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          rp_id?: string;
+          target_id?: string | null;
+          used_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      webauthn_credentials: {
+        Row: {
+          backed_up: boolean;
+          counter: number;
+          created_at: string;
+          credential_id: string;
+          device_label: string;
+          device_type: "multiDevice" | "singleDevice";
+          id: string;
+          last_used_at: string | null;
+          public_key: string;
+          rp_id: string;
+          transports: string[];
+          user_id: string;
+        };
+        Insert: {
+          backed_up?: boolean;
+          counter?: number;
+          created_at?: string;
+          credential_id: string;
+          device_label: string;
+          device_type: "multiDevice" | "singleDevice";
+          id?: string;
+          last_used_at?: string | null;
+          public_key: string;
+          rp_id: string;
+          transports?: string[];
+          user_id: string;
+        };
+        Update: {
+          backed_up?: boolean;
+          counter?: number;
+          created_at?: string;
+          credential_id?: string;
+          device_label?: string;
+          device_type?: "multiDevice" | "singleDevice";
+          id?: string;
+          last_used_at?: string | null;
+          public_key?: string;
+          rp_id?: string;
+          transports?: string[];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       poll_options: {
         Row: {
           created_at: string;
@@ -338,6 +422,10 @@ export type Database = {
       };
     };
     Functions: {
+      get_bill_feed: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       authenticate_bill_participant: {
         Args: { p_participant_id: string };
         Returns: undefined;
@@ -360,6 +448,14 @@ export type Database = {
       };
       close_poll: {
         Args: { p_poll_id: string };
+        Returns: undefined;
+      };
+      complete_webauthn_bill_action: {
+        Args: {
+          p_action_type: "accept_allocation" | "confirm_receipt";
+          p_participant_id: string;
+          p_user_id: string;
+        };
         Returns: undefined;
       };
       create_bill: {

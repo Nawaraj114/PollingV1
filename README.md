@@ -4,9 +4,20 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 5 — Polling Module (preview branch)
+Phase 7 — Passkey Step-Up Authentication (preview branch; Phase 6 chat remains deferred)
 
-- Password re-authentication before a participant can accept an allocation
+- Passkey registration and removal from the account screen
+- Face, fingerprint, or device-PIN approval for sensitive billing actions
+- Single-page bill cards for accepting allocations, marking payments, and confirming receipts
+- Expandable bill breakdowns and audit history without a separate detail screen
+- Settled bills automatically leave the active Bills tab after every payment is confirmed
+- Realtime bill creation and lifecycle updates across signed-in browsers without manual refresh
+- Prefetched Bills and Polls routes with immediate loading feedback during navigation
+- Single-round-trip billing feed reads and parallel poll-feed reads for lower server latency
+- Batched avatar signing and database-authoritative creation validation to reduce form wait time
+- One-time, five-minute WebAuthn challenges bound to the signed-in user, hostname, and billing action
+- Verified passkey acceptance and receipt confirmation with immutable audit attribution
+- Password re-authentication remains available as a fallback
 - Database-enforced fresh-session check for acceptance
 - Accepted amounts, category breakdowns, and bill headers locked by triggers
 - Participant dispute notes and biller-only balanced resubmission
@@ -22,7 +33,7 @@ Phase 5 — Polling Module (preview branch)
 - Phase 1 invite-only authentication and Phase 2 billing creation remain active
 - GitHub Actions checks for linting, tests, types, and production builds
 
-Polling writes use database functions so poll creation, multiple-choice ballots, expiry checks, and one-vote rules cannot be bypassed through the browser. Chat remains deferred and is not part of this build.
+Passkey signatures are verified by a Supabase Edge Function before a service-role-only database function completes the bound billing action. Private passkey material never leaves the user's authenticator. Polling remains active, while chat remains deferred and is not part of this build.
 
 ## Local setup
 
@@ -102,6 +113,14 @@ The Vercel–Supabase integration normally synchronizes these variables:
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
 Confirm that both exist in Preview and Production environments. Preview deployments should use throwaway test data until a separate staging project exists.
+
+Passkeys are scoped to the page hostname. A passkey registered on a Vercel preview hostname will not automatically be available on the production hostname, so register once on each deployment used for testing. The Edge Function accepts localhost, the stable production deployment, and this project's Vercel preview aliases.
+
+Deploy the WebAuthn verifier after linking the Supabase project:
+
+```bash
+npx supabase functions deploy webauthn
+```
 
 ## Quality checks
 

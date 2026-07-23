@@ -14,25 +14,23 @@ export const metadata: Metadata = { title: "Polls" };
 export default async function PollsPage() {
   const viewer = await requireViewer();
   const supabase = await createClient();
-  const { data: polls, error } = await supabase
-    .from("poll_overview")
-    .select("allows_multiple, created_at, created_by, expires_at, id, is_open, question, status")
-    .order("created_at", { ascending: false });
-  const pollIds = (polls ?? []).map(({ id }) => id);
-  const [{ data: options }, { data: votes }, { data: profiles }] = await Promise.all([
-    pollIds.length
-      ? supabase
-          .from("poll_options")
-          .select("id, label, poll_id, position")
-          .in("poll_id", pollIds)
-          .order("position")
-      : Promise.resolve({ data: [] }),
-    pollIds.length
-      ? supabase
-          .from("poll_votes")
-          .select("created_at, id, poll_id, poll_option_id, voter_id")
-          .in("poll_id", pollIds)
-      : Promise.resolve({ data: [] }),
+  const [
+    { data: polls, error },
+    { data: options },
+    { data: votes },
+    { data: profiles },
+  ] = await Promise.all([
+    supabase
+      .from("poll_overview")
+      .select("allows_multiple, created_at, created_by, expires_at, id, is_open, question, status")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("poll_options")
+      .select("id, label, poll_id, position")
+      .order("position"),
+    supabase
+      .from("poll_votes")
+      .select("created_at, id, poll_id, poll_option_id, voter_id"),
     supabase.from("profiles").select("full_name, id"),
   ]);
   const profileNames = Object.fromEntries(
@@ -52,7 +50,7 @@ export default async function PollsPage() {
             Make a decision together and watch the result update as friends vote.
           </p>
         </div>
-        <Link className="button button-primary h-12 px-5" href="/polls/new">
+        <Link className="button button-primary h-12 px-5" href="/polls/new" prefetch>
           <CirclePlus size={18} aria-hidden="true" /> Create poll
         </Link>
       </section>
@@ -72,7 +70,7 @@ export default async function PollsPage() {
           <p className="mx-auto mt-2 max-w-md leading-7 text-[#7d8088]">
             Start with the next decision your group needs to make.
           </p>
-          <Link className="button button-dark mt-6" href="/polls/new">Create the first poll</Link>
+          <Link className="button button-dark mt-6" href="/polls/new" prefetch>Create the first poll</Link>
         </section>
       )}
 

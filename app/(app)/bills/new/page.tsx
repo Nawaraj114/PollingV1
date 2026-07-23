@@ -29,19 +29,22 @@ export default async function NewBillPage() {
       .order("full_name"),
   ]);
 
-  const members = await Promise.all(
-    (profiles ?? []).map(async (profile) => {
-      const { data } = profile.avatar_path
-        ? await supabase.storage.from("avatars").createSignedUrl(profile.avatar_path, 60 * 60)
-        : { data: null };
-
-      return {
-        avatarUrl: data?.signedUrl ?? null,
-        fullName: profile.full_name,
-        id: profile.id,
-      };
-    }),
+  const avatarPaths = (profiles ?? [])
+    .map(({ avatar_path }) => avatar_path)
+    .filter((path): path is string => Boolean(path));
+  const { data: signedAvatars } = avatarPaths.length
+    ? await supabase.storage.from("avatars").createSignedUrls(avatarPaths, 60 * 60)
+    : { data: [] };
+  const avatarUrls = new Map(
+    (signedAvatars ?? []).map((avatar) => [avatar.path, avatar.signedUrl]),
   );
+  const members = (profiles ?? []).map((profile) => ({
+    avatarUrl: profile.avatar_path
+      ? (avatarUrls.get(profile.avatar_path) ?? null)
+      : null,
+    fullName: profile.full_name,
+    id: profile.id,
+  }));
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-9 sm:px-8 sm:py-12">
@@ -69,4 +72,3 @@ export default async function NewBillPage() {
     </main>
   );
 }
-

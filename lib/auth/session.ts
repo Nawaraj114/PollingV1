@@ -16,15 +16,20 @@ function claimString(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
-export const getViewer = cache(async (): Promise<Viewer | null> => {
+const getClaims = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
-  const claims = data?.claims;
+  return error ? null : (data?.claims ?? null);
+});
 
-  if (error || !claims?.sub) {
+export const getViewer = cache(async (): Promise<Viewer | null> => {
+  const claims = await getClaims();
+
+  if (!claims?.sub) {
     return null;
   }
 
+  const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
     .select("avatar_path, full_name")
@@ -54,6 +59,11 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   };
 });
 
+export const getViewerId = cache(async () => {
+  const claims = await getClaims();
+  return claims?.sub ?? null;
+});
+
 export async function requireViewer() {
   const viewer = await getViewer();
 
@@ -62,4 +72,14 @@ export async function requireViewer() {
   }
 
   return viewer;
+}
+
+export async function requireViewerId() {
+  const viewerId = await getViewerId();
+
+  if (!viewerId) {
+    redirect("/login");
+  }
+
+  return viewerId;
 }

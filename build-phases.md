@@ -112,11 +112,11 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 7 — Upgrade Step-Up Auth to WebAuthn (Passkeys)
 **Goal:** replace the password-re-entry fallback with real biometric/PIN device authentication, without touching any other part of the schema (this is exactly why `auth_method` was designed as a flexible field from Phase 3).
 
-- [ ] Add `webauthn_credentials` table
-- [ ] Client: register a passkey per device using `@simplewebauthn/browser`
-- [ ] Server: an Edge Function using `@simplewebauthn/server` to issue challenges and verify signatures
-- [ ] Swap the "Authenticate & Accept" and "Confirm Receipt" actions to request a WebAuthn signature instead of a password, falling back to password if no passkey is registered on that device
-- [ ] Store `auth_method = 'webauthn'` on success
+- [x] Add `webauthn_credentials` table
+- [x] Client: register a passkey per device using `@simplewebauthn/browser`
+- [x] Server: an Edge Function using `@simplewebauthn/server` to issue challenges and verify signatures
+- [x] Swap the "Authenticate & Accept" and "Confirm Receipt" actions to request a WebAuthn signature instead of a password, falling back to password if no passkey is registered on that device
+- [x] Store `auth_method = 'webauthn'` on success
 
 **Definition of Done:** on a phone, tapping "Authenticate & Accept" triggers the actual Face ID / fingerprint / device PIN prompt, and the DB write only happens after a valid signature.
 
