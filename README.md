@@ -4,8 +4,11 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 8 — Actionable In-App Notifications (preview branch; Phase 6 chat remains deferred)
+Phase 8 — Auditable Bill History Export (preview branch; Phase 6 chat remains deferred)
 
+- RLS-protected CSV export of every bill visible to the signed-in member
+- Open, settled, and soft-deleted bills with allocation, payment, and receipt context
+- One row per append-only audit event with spreadsheet-safe user-entered fields
 - Live notification badge and dedicated action center
 - Derived bill and poll alerts that clear automatically when resolved
 - Allocation review, payment, dispute, receipt confirmation, and voting reminders
