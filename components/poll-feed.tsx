@@ -116,7 +116,10 @@ function InlinePollCard({
   }
 
   return (
-    <article className="rounded-[1.7rem] border border-black/7 bg-white p-5 shadow-[0_9px_30px_rgba(34,37,43,0.035)] sm:p-6">
+    <article
+      className="scroll-mt-24 rounded-[1.7rem] border border-black/7 bg-white p-5 shadow-[0_9px_30px_rgba(34,37,43,0.035)] sm:p-6"
+      id={`poll-${poll.id}`}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ${closed ? "bg-[#f1f2f3] text-[#70737a]" : "bg-[#eaf8ee] text-[#2f7042]"}`}>
           {closed ? "Closed" : "Vote now"}

@@ -125,7 +125,7 @@ Companion to `app-design-spec.md`. This breaks the build into small, shippable p
 ## Phase 8 — Polish & Extras (pick based on what you actually miss using it)
 - [x] Net balance / debt-simplification view across all bills
 - [x] Receipt photo attachment via Supabase Storage
-- [ ] Notifications (email via a free-tier provider, or in-app badges) for "a bill needs your response"
+- [x] Notifications (email via a free-tier provider, or in-app badges) for "a bill needs your response"
 - [ ] CSV export of bill history
 - [ ] PWA install support
 - [ ] Dark mode

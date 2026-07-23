@@ -455,6 +455,10 @@ export type Database = {
       };
     };
     Functions: {
+      get_action_notifications: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       get_circle_balance_snapshot: {
         Args: Record<PropertyKey, never>;
         Returns: Json;
