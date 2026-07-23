@@ -4,8 +4,12 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 8 — Auditable Bill History Export (preview branch; Phase 6 chat remains deferred)
+Phase 8 — Installable Progressive Web App (preview branch; Phase 6 chat remains deferred)
 
+- Installable standalone experience for supported desktop and mobile browsers
+- Branded regular, maskable, and Apple home-screen icons plus app shortcuts
+- Public offline fallback without caching private billing, polling, or account data
+- Cross-platform installation guidance and installed-state feedback on Account
 - RLS-protected CSV export of every bill visible to the signed-in member
 - Open, settled, and soft-deleted bills with allocation, payment, and receipt context
 - One row per append-only audit event with spreadsheet-safe user-entered fields

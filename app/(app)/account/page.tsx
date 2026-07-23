@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AccountForm } from "@/components/account-form";
 import { MemberAvatar } from "@/components/member-avatar";
 import { PasskeyManager } from "@/components/passkey-manager";
+import { PwaInstallCard } from "@/components/pwa-install-card";
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -110,6 +111,7 @@ export default async function AccountPage() {
       </div>
 
       <PasskeyManager passkeys={passkeys ?? []} />
+      <PwaInstallCard />
     </main>
   );
 }
