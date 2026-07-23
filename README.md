@@ -4,8 +4,11 @@ A private Next.js and Supabase application for a group of friends to split bills
 
 ## Current phase
 
-Phase 8 — Private Receipt Attachments (preview branch; Phase 6 chat remains deferred)
+Phase 8 — Actionable In-App Notifications (preview branch; Phase 6 chat remains deferred)
 
+- Live notification badge and dedicated action center
+- Derived bill and poll alerts that clear automatically when resolved
+- Allocation review, payment, dispute, receipt confirmation, and voting reminders
 - Private receipt photos stored in a restricted Supabase Storage bucket
 - Biller-only upload and removal with bill-member-only signed viewing links
 - Optional receipt capture during bill creation or later from bill details

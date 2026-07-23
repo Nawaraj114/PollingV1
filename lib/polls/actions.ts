@@ -26,6 +26,7 @@ function refreshPoll(pollId: string) {
   revalidatePath(`/polls/${pollId}`);
   revalidatePath("/polls");
   revalidatePath("/dashboard");
+  revalidatePath("/notifications");
 }
 
 export async function createPoll(
@@ -77,6 +78,7 @@ export async function createPoll(
 
   revalidatePath("/polls");
   revalidatePath("/dashboard");
+  revalidatePath("/notifications");
   redirect("/polls");
 }
 

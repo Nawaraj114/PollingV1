@@ -85,6 +85,7 @@ export function CreateBillForm({
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const handledBillIdRef = useRef<string | null>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
+  const submittedReceiptRef = useRef<File | null>(null);
 
   const selectedMembers = useMemo(
     () => members.filter(({ id }) => Boolean(drafts[id])),
@@ -155,7 +156,8 @@ export function CreateBillForm({
     const billId = state.billId;
 
     void (async () => {
-      const receipt = receiptInputRef.current?.files?.[0];
+      const receipt = submittedReceiptRef.current;
+      submittedReceiptRef.current = null;
 
       if (receipt) {
         setUploadingReceipt(true);
@@ -225,6 +227,7 @@ export function CreateBillForm({
           ? validateReceiptFile(receipt)
           : null;
 
+        submittedReceiptRef.current = validationError ? null : receipt ?? null;
         setReceiptError(validationError);
         if (validationError) event.preventDefault();
       }}

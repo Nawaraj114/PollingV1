@@ -131,6 +131,7 @@ export async function createBill(
 
     revalidatePath("/bills");
     revalidatePath("/dashboard");
+    revalidatePath("/notifications");
     return { billId, status: "success" };
   } catch (error) {
     if (error instanceof BillSplitError) {

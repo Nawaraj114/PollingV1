@@ -36,6 +36,7 @@ function refreshBill(billId: string) {
   revalidatePath("/bills");
   revalidatePath("/balances");
   revalidatePath("/dashboard");
+  revalidatePath("/notifications");
 }
 
 export async function markAllocationPaid(

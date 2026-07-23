@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/lib/auth/actions";
 import { AppLogo } from "./app-logo";
 import { MemberAvatar } from "./member-avatar";
+import { NotificationBell } from "./notification-bell";
 
 const navigation = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
@@ -24,9 +25,11 @@ const navigation = [
 ];
 
 export function AppNavigation({
+  notificationCount,
   viewerAvatarUrl,
   viewerName,
 }: {
+  notificationCount: number;
   viewerAvatarUrl: string | null;
   viewerName: string;
 }) {
@@ -57,6 +60,7 @@ export function AppNavigation({
             })}
           </nav>
           <div className="flex items-center gap-2">
+            <NotificationBell initialCount={notificationCount} />
             <Link aria-label="Open account settings" href="/account">
               <MemberAvatar avatarUrl={viewerAvatarUrl} name={viewerName} />
             </Link>
